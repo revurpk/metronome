@@ -490,15 +490,92 @@ const Engine = (()=> {
   let cycleCount=0, beatInCycle=0;
   let accentSam=true, volume=0.8;
   let countIn=false, countingIn=false, countPos=0;
-  let onBeat=()=>{}, onCycle=()=>{};
+  let onBeat=()=>{}, onCycle=()=>{}, onFallback=()=>{};
   let trainerStep=0, trainerEvery=4, loop=true, bpm=80;
 
   const LOOKAHEAD=0.1, INTERVAL=25;
 
+  // ---- backend selection: 'webaudio' (precise) or 'html' (compatibility) ----
+  // iOS "Lockdown Mode" blocks the Web Audio API, so we fall back to plain
+  // <audio> elements playing pre-rendered WAV clicks on a self-correcting timer.
+  let webAudio=true, backend="webaudio";
+  let htmlReady=false, pools={}, htmlTimer=null, htmlSubTimers=[], htmlRef=0;
+
+  function buildWav(freq, dur, peak, kind){
+    const sr=22050, n=Math.max(1,Math.floor(sr*dur)), dataSize=n*2;
+    const buf=new ArrayBuffer(44+dataSize), dv=new DataView(buf); let p=0;
+    const str=s=>{ for(let i=0;i<s.length;i++) dv.setUint8(p++,s.charCodeAt(i)); };
+    const u32=v=>{ dv.setUint32(p,v,true); p+=4; };
+    const u16=v=>{ dv.setUint16(p,v,true); p+=2; };
+    str("RIFF"); u32(36+dataSize); str("WAVE");
+    str("fmt "); u32(16); u16(1); u16(1); u32(sr); u32(sr*2); u16(2); u16(16);
+    str("data"); u32(dataSize);
+    for(let i=0;i<n;i++){
+      const t=i/sr, env=Math.exp(-t*28);
+      const w = kind==="sine" ? Math.sin(2*Math.PI*freq*t)
+                              : Math.asin(Math.sin(2*Math.PI*freq*t))*(2/Math.PI);
+      let v=Math.max(-1,Math.min(1, w*env*peak));
+      dv.setInt16(p, v*32767, true); p+=2;
+    }
+    let bin=""; const bytes=new Uint8Array(buf);
+    for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    return "data:audio/wav;base64,"+btoa(bin);
+  }
+  function buildPools(){
+    if(htmlReady) return;
+    const wav={ sam:buildWav(1400,0.07,1.0,"tri"), tali:buildWav(1050,0.05,0.8,"tri"),
+                khali:buildWav(620,0.06,0.6,"sine"), beat:buildWav(820,0.05,0.55,"tri"),
+                sub:buildWav(492,0.03,0.35,"tri") };
+    for(const k in wav){ pools[k]=[]; for(let i=0;i<3;i++){ const a=new Audio(wav[k]); a.preload="auto"; pools[k].push(a);} pools[k]._i=0; }
+    htmlReady=true;
+  }
+  function htmlUnlock(){
+    for(const k in pools){ pools[k].forEach(a=>{ try{
+      a.muted=true; const pr=a.play();
+      if(pr&&pr.then) pr.then(()=>{a.pause();a.currentTime=0;a.muted=false;}).catch(()=>{a.muted=false;});
+      else { a.pause(); a.muted=false; }
+    }catch(e){} }); }
+  }
+  function playHtml(type){
+    let key=type;
+    if(type==="sub") key="sub";
+    else if(type==="sam" && !accentSam) key="tali";
+    if(!pools[key]) key="beat";
+    const pool=pools[key], a=pool[pool._i % pool.length]; pool._i++;
+    try{ a.currentTime=0; a.volume=volume; const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){}
+  }
+  function startHtml(){
+    backend="html"; onFallback();
+    htmlRef=performance.now()+120;
+    htmlTimer=setTimeout(htmlLoop, 120);
+  }
+  function htmlLoop(){
+    if(!running) return;
+    if(countingIn){ playHtml(countPos===0?"tali":"sub"); }
+    else {
+      const b=beats[pos]; playHtml(b.type);
+      if(subdiv && gati>1){ const ms=beatDur*1000;
+        for(let s=1;s<gati;s++) htmlSubTimers.push(setTimeout(()=>{ if(running) playHtml("sub"); }, ms*(s/gati))); }
+    }
+    onBeat(countingIn?-1:pos, countingIn, countPos);
+    advanceLogical();
+    if(!running) return;
+    htmlRef += beatDur*1000;
+    htmlTimer=setTimeout(htmlLoop, Math.max(0, htmlRef-performance.now()));
+  }
+
   let unlocked=false;
   function ensure(){
-    if(!ctx){ ctx=new (window.AudioContext||window.webkitAudioContext)();
-      master=ctx.createGain(); master.gain.value=volume; master.connect(ctx.destination); }
+    // Always prepare + unlock the HTML fallback inside the gesture, so it's ready
+    // if Web Audio turns out to be unavailable (e.g. Lockdown Mode).
+    buildPools(); htmlUnlock();
+    if(!webAudio) return;
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC){ webAudio=false; return; }
+    if(!ctx){
+      try{ ctx=new AC(); master=ctx.createGain(); master.gain.value=volume; master.connect(ctx.destination); }
+      catch(e){ webAudio=false; ctx=null; return; }
+    }
     // iOS/Safari unlock: must play a (silent) sound synchronously inside the user
     // gesture, otherwise the context stays suspended and currentTime never advances.
     if(!unlocked){
@@ -543,8 +620,7 @@ const Engine = (()=> {
     }
   }
 
-  function advance(){
-    nextTime += beatDur;
+  function advanceLogical(){
     if(countingIn){
       countPos++;
       if(countPos>=beats.length){ countingIn=false; countPos=0; pos=0; beatInCycle=0; cycleCount=0; }
@@ -563,6 +639,7 @@ const Engine = (()=> {
       }
     }
   }
+  function advance(){ nextTime += beatDur; advanceLogical(); }
 
   function loopFn(){
     if(!running){ stop(); return; }
@@ -589,14 +666,19 @@ const Engine = (()=> {
     beats=cfg.beats; gati=cfg.gati; subdiv=cfg.subdiv;
     accentSam=cfg.accentSam; loop=cfg.loop;
     trainerStep=cfg.trainerStep; trainerEvery=cfg.trainerEvery;
-    onBeat=cfg.onBeat; onCycle=cfg.onCycle;
+    onBeat=cfg.onBeat; onCycle=cfg.onCycle; onFallback=cfg.onFallback||(()=>{});
     bpm=cfg.bpm; recalc();
     pos=0; beatInCycle=0; cycleCount=0;
     countIn=cfg.countIn; countingIn=cfg.countIn; countPos=0;
-    running=true;
+    running=true; backend="webaudio";
+    if(!webAudio || !ctx){ startHtml(); return; }
     // Wait for the context to actually be running before reading currentTime —
-    // on iOS resume() is async and the clock is frozen until it resolves.
-    const begin=()=>{ nextTime=ctx.currentTime+0.12; loopFn(); };
+    // on iOS resume() is async and the clock is frozen until it resolves. If it
+    // never reaches "running" (e.g. Lockdown Mode), fall back to <audio>.
+    const begin=()=>{
+      if(ctx.state==="running"){ nextTime=ctx.currentTime+0.12; loopFn(); }
+      else { startHtml(); }
+    };
     if(ctx.state!=="running" && ctx.resume){
       ctx.resume().then(begin).catch(begin);
     } else {
@@ -604,7 +686,10 @@ const Engine = (()=> {
     }
   }
   function stop(){
-    running=false; if(timer) clearTimeout(timer); timer=null;
+    running=false;
+    if(timer) clearTimeout(timer); timer=null;
+    if(htmlTimer) clearTimeout(htmlTimer); htmlTimer=null;
+    htmlSubTimers.forEach(clearTimeout); htmlSubTimers=[];
   }
   function setVolume(v){ volume=v; if(master) master.gain.value=v; }
   function setLive(cfg){ // live updates while running
@@ -615,7 +700,8 @@ const Engine = (()=> {
     if(cfg.trainerStep!=null) trainerStep=cfg.trainerStep;
     if(cfg.trainerEvery!=null) trainerEvery=cfg.trainerEvery;
   }
-  return { start, stop, setBpm, setVolume, setLive, isRunning:()=>running, ensure };
+  return { start, stop, setBpm, setVolume, setLive, isRunning:()=>running,
+           getBackend:()=>backend, ensure };
 })();
 
 /* ============================================================
@@ -755,7 +841,9 @@ function startStop(){
         el.gHand.textContent="⏳";
       } else highlight(idx);
     },
-    onCycle: (n)=>{ el.cycleCount.textContent="Cycles (avartana/avartan): "+n; },
+    onCycle: (n)=>{ el.cycleCount.textContent="Cycles (avartana/avartan): "+n
+      + (Engine.getBackend()==="html" ? "  ·  compatibility audio mode" : ""); },
+    onFallback: ()=>{ el.cycleCount.textContent="Compatibility audio mode (Web Audio unavailable — e.g. Lockdown Mode)"; },
   });
   el.play.textContent="⏹ Stop";
 }

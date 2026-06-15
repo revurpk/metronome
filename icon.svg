@@ -1,50 +1,93 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tala Metronome icon">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tala Metronome — tabla">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#3a1d6e"/>
       <stop offset="0.55" stop-color="#7b2d8e"/>
       <stop offset="1" stop-color="#c2410c"/>
     </linearGradient>
-    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fde68a"/>
-      <stop offset="1" stop-color="#f59e0b"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.6">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+    <radialGradient id="glow" cx="0.5" cy="0.36" r="0.7">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.16"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e7edf3"/>
+      <stop offset="0.5" stop-color="#9aa6b4"/>
+      <stop offset="1" stop-color="#5b6675"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e9b574"/>
+      <stop offset="0.5" stop-color="#c8853f"/>
+      <stop offset="1" stop-color="#8f5320"/>
+    </linearGradient>
+    <radialGradient id="skinB" cx="0.42" cy="0.38" r="0.75">
+      <stop offset="0" stop-color="#fbf3df"/>
+      <stop offset="1" stop-color="#d9c69b"/>
+    </radialGradient>
+    <radialGradient id="skinD" cx="0.42" cy="0.38" r="0.75">
+      <stop offset="0" stop-color="#fdf6e4"/>
+      <stop offset="1" stop-color="#e2cfa3"/>
+    </radialGradient>
+    <radialGradient id="syahi" cx="0.4" cy="0.36" r="0.8">
+      <stop offset="0" stop-color="#4b4b52"/>
+      <stop offset="0.5" stop-color="#23232a"/>
+      <stop offset="1" stop-color="#0c0c10"/>
     </radialGradient>
   </defs>
 
-  <!-- rounded tile -->
-  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#bg)"/>
-  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#glow)"/>
+  <!-- tile -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
 
-  <!-- avartana / tala cycle ring of beat dots -->
-  <g fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="10">
-    <circle cx="256" cy="256" r="180"/>
-  </g>
+  <!-- tala-cycle arc of beats above the drums -->
   <g fill="#fde68a">
-    <!-- 8 beats of a cycle; the "sam"/first beat enlarged -->
-    <circle cx="256" cy="76"  r="20"/>
-    <circle cx="383" cy="129" r="11"/>
-    <circle cx="436" cy="256" r="11"/>
-    <circle cx="383" cy="383" r="11"/>
-    <circle cx="256" cy="436" r="11"/>
-    <circle cx="129" cy="383" r="11"/>
-    <circle cx="76"  cy="256" r="11"/>
-    <circle cx="129" cy="129" r="11"/>
+    <circle cx="118" cy="92"  r="7" opacity="0.7"/>
+    <circle cx="186" cy="70"  r="9"/>
+    <circle cx="256" cy="62"  r="12"/>
+    <circle cx="326" cy="70"  r="9"/>
+    <circle cx="394" cy="92"  r="7" opacity="0.7"/>
   </g>
 
-  <!-- metronome body (pyramid) -->
+  <!-- shadow -->
+  <ellipse cx="256" cy="452" rx="180" ry="26" fill="#000" opacity="0.22"/>
+
+  <!-- ===== BAYAN (bass, metal, left) ===== -->
   <g>
-    <path d="M256 150 L330 372 L182 372 Z" fill="#1e1b4b" stroke="#0f0d2e" stroke-width="6" stroke-linejoin="round"/>
-    <!-- scale slot -->
-    <rect x="248" y="186" width="16" height="150" rx="8" fill="#0f0d2e"/>
-    <!-- pendulum rod + weight, swung to the right -->
-    <g stroke="url(#metal)" stroke-width="11" stroke-linecap="round">
-      <line x1="256" y1="336" x2="300" y2="172"/>
+    <path d="M96 246
+             C 74 318, 84 392, 120 432
+             A 84 28 0 0 0 288 432
+             C 304 392, 300 318, 280 246 Z" fill="url(#metal)"/>
+    <!-- lacing straps -->
+    <g stroke="#3f4753" stroke-width="6" opacity="0.55">
+      <line x1="120" y1="262" x2="132" y2="430"/>
+      <line x1="160" y1="258" x2="166" y2="438"/>
+      <line x1="208" y1="258" x2="210" y2="440"/>
+      <line x1="252" y1="260" x2="246" y2="438"/>
     </g>
-    <rect x="286" y="196" width="30" height="22" rx="5" fill="url(#metal)" transform="rotate(15 301 207)"/>
-    <circle cx="256" cy="336" r="13" fill="url(#metal)"/>
+    <!-- head -->
+    <ellipse cx="188" cy="248" rx="98" ry="40" fill="#b9c2cd"/>
+    <ellipse cx="188" cy="242" rx="98" ry="40" fill="url(#skinB)"/>
+    <ellipse cx="188" cy="242" rx="80" ry="32" fill="none" stroke="#cdb98c" stroke-width="3" opacity="0.8"/>
+    <!-- syahi (black tuning spot) -->
+    <ellipse cx="188" cy="242" rx="42" ry="18" fill="url(#syahi)"/>
+    <ellipse cx="178" cy="236" rx="14" ry="5.5" fill="#6b6b73" opacity="0.6"/>
+  </g>
+
+  <!-- ===== DAYAN (treble, wood, right) ===== -->
+  <g>
+    <path d="M330 270
+             C 314 330, 320 394, 348 430
+             A 64 22 0 0 0 476 430
+             C 490 394, 492 330, 474 270 Z" fill="url(#wood)"/>
+    <g stroke="#6e3f18" stroke-width="5" opacity="0.5">
+      <line x1="346" y1="284" x2="356" y2="430"/>
+      <line x1="384" y1="280" x2="388" y2="436"/>
+      <line x1="424" y1="280" x2="420" y2="436"/>
+      <line x1="460" y1="284" x2="452" y2="430"/>
+    </g>
+    <ellipse cx="402" cy="274" rx="74" ry="30" fill="#caa86f"/>
+    <ellipse cx="402" cy="268" rx="74" ry="30" fill="url(#skinD)"/>
+    <ellipse cx="402" cy="268" rx="58" ry="23" fill="none" stroke="#d8c089" stroke-width="2.5" opacity="0.8"/>
+    <ellipse cx="402" cy="268" rx="30" ry="13" fill="url(#syahi)"/>
+    <ellipse cx="394" cy="263" rx="10" ry="4" fill="#6b6b73" opacity="0.6"/>
   </g>
 </svg>

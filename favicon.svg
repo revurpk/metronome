@@ -5,21 +5,34 @@
       <stop offset="0.55" stop-color="#7b2d8e"/>
       <stop offset="1" stop-color="#c2410c"/>
     </linearGradient>
-    <linearGradient id="m" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fde68a"/>
-      <stop offset="1" stop-color="#f59e0b"/>
+    <linearGradient id="w" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ecbe7e"/>
+      <stop offset="1" stop-color="#9c5e26"/>
     </linearGradient>
+    <radialGradient id="s" cx="0.4" cy="0.36" r="0.8">
+      <stop offset="0" stop-color="#fbf3df"/>
+      <stop offset="1" stop-color="#dcc89c"/>
+    </radialGradient>
+    <radialGradient id="k" cx="0.4" cy="0.36" r="0.85">
+      <stop offset="0" stop-color="#404048"/>
+      <stop offset="1" stop-color="#0d0d12"/>
+    </radialGradient>
   </defs>
   <rect width="64" height="64" rx="15" fill="url(#b)"/>
   <!-- cycle dots -->
   <g fill="#fde68a">
-    <circle cx="32" cy="9"  r="3.4"/>
-    <circle cx="55" cy="32" r="2"/>
-    <circle cx="32" cy="55" r="2"/>
-    <circle cx="9"  cy="32" r="2"/>
+    <circle cx="22" cy="13" r="2.4"/>
+    <circle cx="32" cy="10" r="3.2"/>
+    <circle cx="42" cy="13" r="2.4"/>
   </g>
-  <!-- metronome -->
-  <path d="M32 17 L42 47 L22 47 Z" fill="#1e1b4b" stroke="#0f0d2e" stroke-width="1.5" stroke-linejoin="round"/>
-  <line x1="32" y1="43" x2="38" y2="22" stroke="url(#m)" stroke-width="2.6" stroke-linecap="round"/>
-  <circle cx="32" cy="43" r="2.4" fill="url(#m)"/>
+  <!-- drum body -->
+  <path d="M20 30 C 17 41, 19 50, 24 54 A 11 3.4 0 0 0 46 54 C 51 50, 53 41, 50 30 Z" fill="url(#w)"/>
+  <g stroke="#6e3f18" stroke-width="1.4" opacity="0.45">
+    <line x1="25" y1="32" x2="27" y2="54"/>
+    <line x1="35" y1="31" x2="35" y2="55"/>
+    <line x1="45" y1="32" x2="43" y2="54"/>
+  </g>
+  <!-- head + syahi -->
+  <ellipse cx="35" cy="29" rx="16" ry="6.6" fill="url(#s)"/>
+  <ellipse cx="35" cy="29" rx="7.5" ry="3.2" fill="url(#k)"/>
 </svg>
