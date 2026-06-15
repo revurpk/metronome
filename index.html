@@ -217,7 +217,7 @@
       <label class="toggle"><input type="checkbox" id="t-accent" checked> Accent sam / strong beat</label>
       <label class="toggle"><input type="checkbox" id="t-sub"> Click subdivisions</label>
       <label class="toggle"><input type="checkbox" id="t-bols" checked> Speak bols / counts visually</label>
-      <label class="toggle"><input type="checkbox" id="t-vol-loop"> Loop endlessly</label>
+      <label class="toggle" title="Forces a plain-audio engine that works when the Web Audio API is blocked, e.g. iOS Lockdown Mode."><input type="checkbox" id="t-compat"> Compatibility sound (iOS Lockdown)</label>
     </div>
 
     <div class="trainer-row">
@@ -523,10 +523,29 @@ const Engine = (()=> {
   }
   function buildPools(){
     if(htmlReady) return;
-    const wav={ sam:buildWav(1400,0.07,1.0,"tri"), tali:buildWav(1050,0.05,0.8,"tri"),
-                khali:buildWav(620,0.06,0.6,"sine"), beat:buildWav(820,0.05,0.55,"tri"),
-                sub:buildWav(492,0.03,0.35,"tri") };
-    for(const k in wav){ pools[k]=[]; for(let i=0;i<3;i++){ const a=new Audio(wav[k]); a.preload="auto"; pools[k].push(a);} pools[k]._i=0; }
+    // Prefer real same-origin .wav files (most compatible — iOS Lockdown Mode can
+    // block data: URIs). Fall back to a generated data URI if a file fails to load.
+    const files={ sam:"sounds/sam.wav", tali:"sounds/tali.wav", khali:"sounds/khali.wav",
+                  beat:"sounds/beat.wav", sub:"sounds/sub.wav" };
+    const params={ sam:[1400,0.075,1.0,"tri"], tali:[1050,0.055,0.85,"tri"],
+                   khali:[620,0.065,0.65,"sine"], beat:[820,0.055,0.6,"tri"],
+                   sub:[492,0.035,0.4,"tri"] };
+    for(const k in files){
+      pools[k]=[];
+      let dataUri=null; // built lazily only if the file fails
+      for(let i=0;i<3;i++){
+        const a=new Audio(); a.preload="auto";
+        a.addEventListener("error", ()=>{
+          if(a.src.indexOf("data:")<0){
+            if(!dataUri){ try{ dataUri=buildWav.apply(null, params[k]); }catch(e){ return; } }
+            a.src=dataUri; a.load();
+          }
+        });
+        a.src=files[k];
+        pools[k].push(a);
+      }
+      pools[k]._i=0;
+    }
     htmlReady=true;
   }
   function htmlUnlock(){
@@ -671,7 +690,7 @@ const Engine = (()=> {
     pos=0; beatInCycle=0; cycleCount=0;
     countIn=cfg.countIn; countingIn=cfg.countIn; countPos=0;
     running=true; backend="webaudio";
-    if(!webAudio || !ctx){ startHtml(); return; }
+    if(cfg.forceHtml || !webAudio || !ctx){ startHtml(); return; }
     // Wait for the context to actually be running before reading currentTime —
     // on iOS resume() is async and the clock is frozen until it resolves. If it
     // never reaches "running" (e.g. Lockdown Mode), fall back to <audio>.
@@ -717,7 +736,7 @@ const el={
   tempo:$("#tempo"), bpm:$("#bpm"), tap:$("#tap"),
   viz:$("#viz"), gHand:$("#g-hand"), gBol:$("#g-bol"), gMeta:$("#g-meta"),
   play:$("#play"), vol:$("#vol"),
-  tAccent:$("#t-accent"), tSub:$("#t-sub"), tBols:$("#t-bols"), tLoop:$("#t-vol-loop"),
+  tAccent:$("#t-accent"), tSub:$("#t-sub"), tBols:$("#t-bols"), tCompat:$("#t-compat"),
   trainerStep:$("#trainer-step"), trainerEvery:$("#trainer-every"),
   cycleCount:$("#cycle-count"),
   ciBtn:$("#countin-info"), ciState:$("#ci-state"),
@@ -829,7 +848,8 @@ function startStop(){
     gati: parseInt(el.gati.value,10),
     subdiv: el.tSub.checked,
     accentSam: el.tAccent.checked,
-    loop: true, // loop handled; "loop endlessly" toggle kept for future single-shot
+    loop: true,
+    forceHtml: el.tCompat.checked,
     countIn: countIn,
     bpm: parseInt(el.tempo.value,10),
     trainerStep: parseInt(el.trainerStep.value,10)||0,
@@ -843,7 +863,9 @@ function startStop(){
     },
     onCycle: (n)=>{ el.cycleCount.textContent="Cycles (avartana/avartan): "+n
       + (Engine.getBackend()==="html" ? "  ·  compatibility audio mode" : ""); },
-    onFallback: ()=>{ el.cycleCount.textContent="Compatibility audio mode (Web Audio unavailable — e.g. Lockdown Mode)"; },
+    onFallback: ()=>{ el.cycleCount.textContent = el.tCompat.checked
+      ? "Compatibility audio mode (plain audio engine)"
+      : "Compatibility audio mode (Web Audio unavailable — e.g. Lockdown Mode)"; },
   });
   el.play.textContent="⏹ Stop";
 }

@@ -44,10 +44,20 @@ are served verbatim.
 | File | Purpose |
 |------|---------|
 | `index.html` | The entire app (HTML + CSS + JS, self-contained) |
-| `icon.svg` | App icon / apple-touch-icon |
-| `favicon.svg` | Favicon |
+| `icon.svg` | App icon / apple-touch-icon (tabla + mridangam) |
+| `favicon.svg` | Favicon (mridangam) |
+| `sounds/*.wav` | Click samples for the compatibility audio engine |
+| `tools/gen_sounds.py` | Regenerates the WAV click samples |
 | `.github/workflows/deploy.yml` | GitHub Pages deploy workflow |
 | `.nojekyll` | Disables Jekyll processing on Pages |
+
+## Audio on iOS / Lockdown Mode
+
+The metronome uses the Web Audio API for sample-accurate timing. When Web Audio is unavailable — most
+notably **iOS Lockdown Mode**, which blocks it — the app automatically falls back to a plain `<audio>`
+engine that plays the pre-rendered clicks in `sounds/`. If you still hear nothing in Lockdown Mode, tick
+**“Compatibility sound (iOS Lockdown)”** to force that engine, and make sure the ring/silent switch is off
+(iOS routes `<audio>` through it). Regenerate the samples with `python tools/gen_sounds.py`.
 
 ## Notes on authenticity
 
