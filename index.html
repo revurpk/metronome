@@ -344,6 +344,7 @@
        Tip: press <code>Space</code> to start/stop, <code>↑/↓</code> to change tempo.</p>
     <p><a href="https://github.com/revurpk/metronome" id="gh-link">Source on GitHub</a> · Free &amp; open. Practice well. 🙏</p>
     <p>© 2026 Pradyumna Revur · Released under the <a href="https://github.com/revurpk/metronome/blob/main/LICENSE">MIT License</a></p>
+    <p style="opacity:.6;font-size:.78rem">build 2026-06-14f · <span id="audio-status">audio: initialising…</span></p>
   </footer>
 </div>
 
@@ -548,12 +549,17 @@ const Engine = (()=> {
     }
     htmlReady=true;
   }
+  // Unlock the <audio> elements for later programmatic playback. Must run inside a
+  // user gesture, on elements whose media is already loaded — so pools are built at
+  // page load (see prime()). Unmuted, because a muted play does not unlock iOS audio.
+  let htmlUnlocked=false;
   function htmlUnlock(){
+    if(htmlUnlocked) return;
+    htmlUnlocked=true;
     for(const k in pools){ pools[k].forEach(a=>{ try{
-      a.muted=true; const pr=a.play();
-      if(pr&&pr.then) pr.then(()=>{a.pause();a.currentTime=0;a.muted=false;}).catch(()=>{a.muted=false;});
-      else { a.pause(); a.muted=false; }
-    }catch(e){} }); }
+      const pr=a.play();
+      if(pr&&pr.then) pr.then(()=>{ a.pause(); a.currentTime=0; }).catch(()=>{ htmlUnlocked=false; });
+    }catch(e){ htmlUnlocked=false; } }); }
   }
   function playHtml(type){
     let key=type;
@@ -720,7 +726,7 @@ const Engine = (()=> {
     if(cfg.trainerEvery!=null) trainerEvery=cfg.trainerEvery;
   }
   return { start, stop, setBpm, setVolume, setLive, isRunning:()=>running,
-           getBackend:()=>backend, ensure };
+           getBackend:()=>backend, ensure, prime:buildPools };
 })();
 
 /* ============================================================
@@ -855,6 +861,8 @@ function startStop(){
     trainerStep: parseInt(el.trainerStep.value,10)||0,
     trainerEvery: Math.max(1,parseInt(el.trainerEvery.value,10)||4),
     onBeat: (idx,counting,cPos)=>{
+      const st=$("#audio-status");
+      if(st) st.textContent = "audio: "+(Engine.getBackend()==="html"?"compatibility (plain)":"Web Audio");
       if(counting){
         el.gMeta.textContent="Count-in… "+(cPos+1);
         el.gBol.textContent="•";
@@ -928,6 +936,13 @@ document.addEventListener("keydown",(e)=>{
 populateTalas();
 rebuild();
 Engine.setVolume(0.8);
+// Preload the compatibility click samples at page load so they are decoded and
+// ready to be unlocked on the first tap (critical for iOS Lockdown Mode).
+try{ Engine.prime(); }catch(e){}
+(()=>{ const st=$("#audio-status");
+  const hasWA = !!(window.AudioContext||window.webkitAudioContext);
+  if(st) st.textContent = hasWA ? "audio: Web Audio available" : "audio: Web Audio blocked — using compatibility";
+})();
 </script>
 </body>
 </html>
