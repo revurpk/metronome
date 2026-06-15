@@ -46,18 +46,21 @@ are served verbatim.
 | `index.html` | The entire app (HTML + CSS + JS, self-contained) |
 | `icon.svg` | App icon / apple-touch-icon (tabla + mridangam) |
 | `favicon.svg` | Favicon (mridangam) |
-| `sounds/*.wav` | Click samples for the compatibility audio engine |
-| `tools/gen_sounds.py` | Regenerates the WAV click samples |
 | `.github/workflows/deploy.yml` | GitHub Pages deploy workflow |
 | `.nojekyll` | Disables Jekyll processing on Pages |
 
 ## Audio on iOS / Lockdown Mode
 
-The metronome uses the Web Audio API for sample-accurate timing. When Web Audio is unavailable — most
-notably **iOS Lockdown Mode**, which blocks it — the app automatically falls back to a plain `<audio>`
-engine that plays the pre-rendered clicks in `sounds/`. If you still hear nothing in Lockdown Mode, tick
-**“Compatibility sound (iOS Lockdown)”** to force that engine, and make sure the ring/silent switch is off
-(iOS routes `<audio>` through it). Regenerate the samples with `python tools/gen_sounds.py`.
+The metronome uses the Web Audio API for sample-accurate timing. **iOS Lockdown Mode disables Web Audio
+entirely** (and blocks programmatic per-click playback), so for that case the app has a second engine:
+it renders the *whole tala cycle* into a single `<audio>` element and loops it natively, started directly
+by your tap on **Start** — the one kind of audio playback Lockdown Mode allows. The visual highlight is
+then driven from the audio element's own clock.
+
+If you hear nothing on iOS, tick **“Compatibility sound (iOS Lockdown)”** (this forces the looped engine
+and must be set *before* pressing Start), and make sure the ring/silent switch is off (iOS routes `<audio>`
+through it). Alternatively, you can exclude the page from Lockdown Mode in Safari's **aA** menu to restore
+full Web Audio. The footer shows the build id and which audio engine is active, for troubleshooting.
 
 ## Notes on authenticity
 

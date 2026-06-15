@@ -344,7 +344,7 @@
        Tip: press <code>Space</code> to start/stop, <code>↑/↓</code> to change tempo.</p>
     <p><a href="https://github.com/revurpk/metronome" id="gh-link">Source on GitHub</a> · Free &amp; open. Practice well. 🙏</p>
     <p>© 2026 Pradyumna Revur · Released under the <a href="https://github.com/revurpk/metronome/blob/main/LICENSE">MIT License</a></p>
-    <p style="opacity:.6;font-size:.78rem">build 2026-06-14f · <span id="audio-status">audio: initialising…</span></p>
+    <p style="opacity:.6;font-size:.78rem">build 2026-06-14g · <span id="audio-status">audio: initialising…</span></p>
   </footer>
 </div>
 
@@ -500,100 +500,97 @@ const Engine = (()=> {
   // iOS "Lockdown Mode" blocks the Web Audio API, so we fall back to plain
   // <audio> elements playing pre-rendered WAV clicks on a self-correcting timer.
   let webAudio=true, backend="webaudio";
-  let htmlReady=false, pools={}, htmlTimer=null, htmlSubTimers=[], htmlRef=0;
+  // The compatibility engine renders the WHOLE tala cycle into ONE <audio> element
+  // and loops it natively. The first play() happens synchronously inside the Start
+  // tap (a direct user gesture), which is the only kind of audio playback iOS allows
+  // in Lockdown Mode — there is no programmatic per-click re-triggering to be blocked.
+  const SRATE=22050;
+  let clickCache=null, loopEl=null, loopUrl=null, cycleLen=0, visualTimer=null, lastIdx=-1;
 
-  function buildWav(freq, dur, peak, kind){
-    const sr=22050, n=Math.max(1,Math.floor(sr*dur)), dataSize=n*2;
-    const buf=new ArrayBuffer(44+dataSize), dv=new DataView(buf); let p=0;
-    const str=s=>{ for(let i=0;i<s.length;i++) dv.setUint8(p++,s.charCodeAt(i)); };
-    const u32=v=>{ dv.setUint32(p,v,true); p+=4; };
-    const u16=v=>{ dv.setUint16(p,v,true); p+=2; };
-    str("RIFF"); u32(36+dataSize); str("WAVE");
-    str("fmt "); u32(16); u16(1); u16(1); u32(sr); u32(sr*2); u16(2); u16(16);
-    str("data"); u32(dataSize);
-    for(let i=0;i<n;i++){
-      const t=i/sr, env=Math.exp(-t*28);
-      const w = kind==="sine" ? Math.sin(2*Math.PI*freq*t)
-                              : Math.asin(Math.sin(2*Math.PI*freq*t))*(2/Math.PI);
-      let v=Math.max(-1,Math.min(1, w*env*peak));
-      dv.setInt16(p, v*32767, true); p+=2;
-    }
-    let bin=""; const bytes=new Uint8Array(buf);
-    for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
-    return "data:audio/wav;base64,"+btoa(bin);
-  }
-  function buildPools(){
-    if(htmlReady) return;
-    // Prefer real same-origin .wav files (most compatible — iOS Lockdown Mode can
-    // block data: URIs). Fall back to a generated data URI if a file fails to load.
-    const files={ sam:"sounds/sam.wav", tali:"sounds/tali.wav", khali:"sounds/khali.wav",
-                  beat:"sounds/beat.wav", sub:"sounds/sub.wav" };
-    const params={ sam:[1400,0.075,1.0,"tri"], tali:[1050,0.055,0.85,"tri"],
-                   khali:[620,0.065,0.65,"sine"], beat:[820,0.055,0.6,"tri"],
-                   sub:[492,0.035,0.4,"tri"] };
-    for(const k in files){
-      pools[k]=[];
-      let dataUri=null; // built lazily only if the file fails
-      for(let i=0;i<3;i++){
-        const a=new Audio(); a.preload="auto";
-        a.addEventListener("error", ()=>{
-          if(a.src.indexOf("data:")<0){
-            if(!dataUri){ try{ dataUri=buildWav.apply(null, params[k]); }catch(e){ return; } }
-            a.src=dataUri; a.load();
-          }
-        });
-        a.src=files[k];
-        pools[k].push(a);
+  function buildClicks(){
+    if(clickCache) return clickCache;
+    const def={ sam:[1400,0.075,1.0,"tri"], tali:[1050,0.055,0.85,"tri"],
+                khali:[620,0.065,0.65,"sine"], beat:[820,0.055,0.6,"tri"], sub:[492,0.035,0.4,"tri"] };
+    clickCache={};
+    for(const k in def){
+      const f=def[k][0], d=def[k][1], pk=def[k][2], kind=def[k][3];
+      const n=Math.max(1,Math.floor(SRATE*d)), arr=new Int16Array(n);
+      for(let i=0;i<n;i++){
+        const t=i/SRATE, env=Math.exp(-t*28);
+        const w = kind==="sine" ? Math.sin(2*Math.PI*f*t)
+                                : Math.asin(Math.sin(2*Math.PI*f*t))*(2/Math.PI);
+        arr[i]=Math.max(-1,Math.min(1,w*env*pk))*32767;
       }
-      pools[k]._i=0;
+      clickCache[k]=arr;
     }
-    htmlReady=true;
+    return clickCache;
   }
-  // Unlock the <audio> elements for later programmatic playback. Must run inside a
-  // user gesture, on elements whose media is already loaded — so pools are built at
-  // page load (see prime()). Unmuted, because a muted play does not unlock iOS audio.
-  let htmlUnlocked=false;
-  function htmlUnlock(){
-    if(htmlUnlocked) return;
-    htmlUnlocked=true;
-    for(const k in pools){ pools[k].forEach(a=>{ try{
-      const pr=a.play();
-      if(pr&&pr.then) pr.then(()=>{ a.pause(); a.currentTime=0; }).catch(()=>{ htmlUnlocked=false; });
-    }catch(e){ htmlUnlocked=false; } }); }
+  function pcmToWavUrl(int16){
+    const n=int16.length, dataSize=n*2, buf=new ArrayBuffer(44+dataSize), dv=new DataView(buf); let p=0;
+    const str=s=>{ for(let i=0;i<s.length;i++) dv.setUint8(p++,s.charCodeAt(i)); };
+    const u32=v=>{ dv.setUint32(p,v,true); p+=4; }, u16=v=>{ dv.setUint16(p,v,true); p+=2; };
+    str("RIFF"); u32(36+dataSize); str("WAVE");
+    str("fmt "); u32(16); u16(1); u16(1); u32(SRATE); u32(SRATE*2); u16(2); u16(16);
+    str("data"); u32(dataSize);
+    for(let i=0;i<n;i++){ dv.setInt16(44+i*2, int16[i], true); }
+    return URL.createObjectURL(new Blob([buf], {type:"audio/wav"}));
   }
-  function playHtml(type){
-    let key=type;
-    if(type==="sub") key="sub";
-    else if(type==="sam" && !accentSam) key="tali";
-    if(!pools[key]) key="beat";
-    const pool=pools[key], a=pool[pool._i % pool.length]; pool._i++;
-    try{ a.currentTime=0; a.volume=volume; const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){}
+  function renderCycle(){
+    const clicks=buildClicks();
+    const spb=Math.max(1, Math.round(SRATE*beatDur));   // samples per beat
+    cycleLen=beatDur*beats.length;
+    const total=spb*beats.length, out=new Int16Array(total);
+    const place=(arr,off)=>{ for(let i=0;i<arr.length;i++){ const o=off+i; if(o>=total) break;
+      let s=out[o]+arr[i]; out[o]=s>32767?32767:(s<-32768?-32768:s); } };
+    for(let b=0;b<beats.length;b++){
+      let type=beats[b].type;
+      if(type==="sam" && !accentSam) type="tali";
+      place(clicks[type]||clicks.beat, b*spb);
+      if(subdiv && gati>1){ for(let s=1;s<gati;s++) place(clicks.sub, Math.round((b+s/gati)*spb)); }
+    }
+    if(loopUrl) URL.revokeObjectURL(loopUrl);
+    loopUrl=pcmToWavUrl(out);
+    return loopUrl;
   }
-  function startHtml(){
+  function startHtml(){            // compatibility backend entry point
     backend="html"; onFallback();
-    htmlRef=performance.now()+120;
-    htmlTimer=setTimeout(htmlLoop, 120);
+    if(!loopEl){ loopEl=new Audio(); }
+    loopEl.loop=true; loopEl.src=renderCycle(); loopEl.volume=volume;
+    lastIdx=-1; cycleCount=0;
+    try{ const pr=loopEl.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){}
+    loopVisual();
   }
-  function htmlLoop(){
-    if(!running) return;
-    if(countingIn){ playHtml(countPos===0?"tali":"sub"); }
-    else {
-      const b=beats[pos]; playHtml(b.type);
-      if(subdiv && gati>1){ const ms=beatDur*1000;
-        for(let s=1;s<gati;s++) htmlSubTimers.push(setTimeout(()=>{ if(running) playHtml("sub"); }, ms*(s/gati))); }
+  function reloadLoop(){           // re-render after a tempo/setting change (same element)
+    if(!loopEl) return;
+    loopEl.src=renderCycle(); loopEl.loop=true; loopEl.volume=volume;
+    try{ const pr=loopEl.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){}
+  }
+  function loopVisual(){
+    if(!running){ return; }
+    let idx=0;
+    if(loopEl && cycleLen>0){
+      const into=loopEl.currentTime % cycleLen;
+      idx=Math.min(beats.length-1, Math.floor(into/beatDur));
     }
-    onBeat(countingIn?-1:pos, countingIn, countPos);
-    advanceLogical();
-    if(!running) return;
-    htmlRef += beatDur*1000;
-    htmlTimer=setTimeout(htmlLoop, Math.max(0, htmlRef-performance.now()));
+    if(idx!==lastIdx){
+      onBeat(idx, false, 0);
+      if(idx===0 && lastIdx>0){           // wrapped to a new cycle
+        cycleCount++; onCycle(cycleCount);
+        if(trainerStep>0 && cycleCount%trainerEvery===0){ setBpm(Math.min(300,bpm+trainerStep)); }
+      }
+      lastIdx=idx;
+    }
+    visualTimer=setTimeout(loopVisual, 30);
+  }
+  function stopHtml(){
+    if(visualTimer){ clearTimeout(visualTimer); visualTimer=null; }
+    if(loopEl){ try{ loopEl.pause(); }catch(e){} }
   }
 
   let unlocked=false;
   function ensure(){
-    // Always prepare + unlock the HTML fallback inside the gesture, so it's ready
-    // if Web Audio turns out to be unavailable (e.g. Lockdown Mode).
-    buildPools(); htmlUnlock();
+    // Pre-compute the click samples so the first cycle render is instant.
+    buildClicks();
     if(!webAudio) return;
     const AC=window.AudioContext||window.webkitAudioContext;
     if(!AC){ webAudio=false; return; }
@@ -684,7 +681,8 @@ const Engine = (()=> {
 
   function recalc(){ beatDur = 60/bpm; }
 
-  function setBpm(v){ bpm=v; recalc(); if(window._onBpm) window._onBpm(v); }
+  function setBpm(v){ bpm=v; recalc(); if(window._onBpm) window._onBpm(v);
+    if(backend==="html" && running) reloadLoop(); }
 
   function start(cfg){
     ensure();
@@ -713,10 +711,9 @@ const Engine = (()=> {
   function stop(){
     running=false;
     if(timer) clearTimeout(timer); timer=null;
-    if(htmlTimer) clearTimeout(htmlTimer); htmlTimer=null;
-    htmlSubTimers.forEach(clearTimeout); htmlSubTimers=[];
+    stopHtml();
   }
-  function setVolume(v){ volume=v; if(master) master.gain.value=v; }
+  function setVolume(v){ volume=v; if(master) master.gain.value=v; if(loopEl) loopEl.volume=v; }
   function setLive(cfg){ // live updates while running
     if(cfg.gati!=null) gati=cfg.gati;
     if(cfg.subdiv!=null) subdiv=cfg.subdiv;
@@ -724,9 +721,10 @@ const Engine = (()=> {
     if(cfg.loop!=null) loop=cfg.loop;
     if(cfg.trainerStep!=null) trainerStep=cfg.trainerStep;
     if(cfg.trainerEvery!=null) trainerEvery=cfg.trainerEvery;
+    if(backend==="html" && running) reloadLoop();   // re-render with new settings
   }
   return { start, stop, setBpm, setVolume, setLive, isRunning:()=>running,
-           getBackend:()=>backend, ensure, prime:buildPools };
+           getBackend:()=>backend, ensure, prime:buildClicks };
 })();
 
 /* ============================================================
