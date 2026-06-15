@@ -495,10 +495,19 @@ const Engine = (()=> {
 
   const LOOKAHEAD=0.1, INTERVAL=25;
 
+  let unlocked=false;
   function ensure(){
     if(!ctx){ ctx=new (window.AudioContext||window.webkitAudioContext)();
       master=ctx.createGain(); master.gain.value=volume; master.connect(ctx.destination); }
-    if(ctx.state==="suspended") ctx.resume();
+    // iOS/Safari unlock: must play a (silent) sound synchronously inside the user
+    // gesture, otherwise the context stays suspended and currentTime never advances.
+    if(!unlocked){
+      try{
+        const b=ctx.createBuffer(1,1,22050);
+        const s=ctx.createBufferSource(); s.buffer=b; s.connect(ctx.destination); s.start(0);
+        unlocked=true;
+      }catch(e){}
+    }
   }
 
   // click: type drives pitch/timbre
@@ -585,8 +594,14 @@ const Engine = (()=> {
     pos=0; beatInCycle=0; cycleCount=0;
     countIn=cfg.countIn; countingIn=cfg.countIn; countPos=0;
     running=true;
-    nextTime=ctx.currentTime+0.06;
-    loopFn();
+    // Wait for the context to actually be running before reading currentTime —
+    // on iOS resume() is async and the clock is frozen until it resolves.
+    const begin=()=>{ nextTime=ctx.currentTime+0.12; loopFn(); };
+    if(ctx.state!=="running" && ctx.resume){
+      ctx.resume().then(begin).catch(begin);
+    } else {
+      begin();
+    }
   }
   function stop(){
     running=false; if(timer) clearTimeout(timer); timer=null;
