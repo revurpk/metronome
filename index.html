@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<!--
+  Tala Metronome — Carnatic & Hindustani rhythm trainer
+  Copyright (c) 2026 Pradyumna Revur — MIT License (see LICENSE)
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Tala Metronome — Carnatic & Hindustani Rhythm Trainer</title>
+<meta name="description" content="A free, offline-capable metronome for South Indian Carnatic talas and North Indian Hindustani taals, with hand-gesture and bol guidance for students and accompanists." />
+<meta name="theme-color" content="#3a1d6e" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<style>
+  :root{
+    --bg:#140f2e; --bg2:#1d1542; --panel:#231a4d; --panel2:#2c2160;
+    --ink:#f3effa; --muted:#b3a9d6; --line:#3a2f6b;
+    --accent:#f59e0b; --accent2:#c2410c; --sam:#fbbf24; --tali:#a78bfa;
+    --khali:#38bdf8; --beat:#7c6fb8; --ok:#34d399;
+    --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
+    --font:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%, #2a1f5c 0%, var(--bg) 55%);
+    color:var(--ink); font-family:var(--font); line-height:1.5;
+    -webkit-font-smoothing:antialiased; padding-bottom:48px;
+  }
+  a{color:var(--accent)}
+  header{
+    text-align:center; padding:26px 16px 8px;
+  }
+  header .logo{display:inline-flex;align-items:center;gap:12px}
+  header img{width:54px;height:54px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
+  header h1{font-size:clamp(1.4rem,3.5vw,2rem);margin:0;letter-spacing:.3px}
+  header p.tag{color:var(--muted);margin:6px 0 0;font-size:.95rem}
+  .wrap{max-width:980px;margin:0 auto;padding:0 16px}
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--bg2));
+    border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:18px; margin-top:18px;
+  }
+  /* Tabs */
+  .tabs{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+  .tab{
+    background:var(--panel); color:var(--muted); border:1px solid var(--line);
+    padding:10px 20px; border-radius:999px; cursor:pointer; font-size:1rem;
+    font-weight:600; transition:.15s;
+  }
+  .tab[aria-selected="true"]{
+    background:linear-gradient(180deg,var(--accent),var(--accent2));
+    color:#1a1330; border-color:transparent;
+  }
+  .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  /* Controls grid */
+  .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+  .ctl label{display:block;font-size:.8rem;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.06em;margin-bottom:6px;font-weight:600}
+  select,input[type="number"]{
+    width:100%; background:var(--bg2); color:var(--ink); border:1px solid var(--line);
+    border-radius:10px; padding:10px 12px; font-size:1rem; font-family:inherit;
+  }
+  select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
+  /* Tempo */
+  .tempo-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+  .bpm-display{font-size:2.4rem;font-weight:700;min-width:120px;text-align:center;
+    font-variant-numeric:tabular-nums}
+  .bpm-display small{font-size:.9rem;color:var(--muted);font-weight:500}
+  input[type="range"]{flex:1;min-width:160px;accent-color:var(--accent)}
+  .btn{
+    background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:10px; padding:10px 16px; font-size:.95rem; cursor:pointer;
+    font-family:inherit; font-weight:600; transition:.12s;
+  }
+  .btn:hover{background:var(--line)}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{
+    background:linear-gradient(180deg,var(--accent),var(--accent2));
+    color:#1a1330;border-color:transparent;font-size:1.1rem;padding:14px 28px;min-width:150px
+  }
+  .btn.ghost{background:transparent}
+  .btn-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:16px}
+  /* Beat visualizer */
+  .viz{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0 4px;min-height:96px;align-items:center}
+  .vibhag{display:flex;gap:8px;padding:8px;border-radius:12px;background:rgba(255,255,255,.03);
+    border:1px solid var(--line)}
+  .beat{
+    width:48px;height:64px;border-radius:10px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;background:var(--bg2);
+    border:1px solid var(--line);transition:transform .05s, box-shadow .05s, background .05s;
+    position:relative;
+  }
+  .beat .bol{font-size:.74rem;color:var(--muted);font-weight:600;line-height:1;text-align:center}
+  .beat .sym{font-size:.7rem;color:var(--muted)}
+  .beat .num{position:absolute;top:3px;left:5px;font-size:.6rem;color:var(--muted);opacity:.7}
+  .beat.t-sam{border-color:var(--sam)}
+  .beat.t-tali{border-color:var(--tali)}
+  .beat.t-khali{border-color:var(--khali)}
+  .beat.active{transform:scale(1.12);box-shadow:0 0 0 2px var(--accent),0 8px 20px rgba(245,158,11,.4);z-index:2}
+  .beat.active.t-sam{box-shadow:0 0 0 2px var(--sam),0 8px 24px rgba(251,191,36,.55);background:rgba(251,191,36,.18)}
+  .beat.active.t-khali{box-shadow:0 0 0 2px var(--khali),0 8px 20px rgba(56,189,248,.4);background:rgba(56,189,248,.14)}
+  .beat.active.t-tali{background:rgba(167,139,250,.16)}
+  .beat.active.t-beat{background:rgba(124,111,184,.18)}
+  /* Now-playing gesture banner */
+  .gesture{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:8px;
+    padding:14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    flex-wrap:wrap;min-height:64px}
+  .gesture .big{font-size:1.5rem;font-weight:700}
+  .gesture .hand{font-size:2rem}
+  .gesture .meta{color:var(--muted);font-size:.95rem}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:700;
+    border:1px solid var(--line)}
+  .pill.sam{color:var(--sam);border-color:var(--sam)}
+  .pill.tali{color:var(--tali);border-color:var(--tali)}
+  .pill.khali{color:var(--khali);border-color:var(--khali)}
+  /* Toggles */
+  .toggles{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;justify-content:center}
+  .toggle{display:flex;align-items:center;gap:8px;font-size:.92rem;color:var(--muted);cursor:pointer}
+  .toggle input{width:18px;height:18px;accent-color:var(--accent)}
+  /* Guidance */
+  .guide h2{font-size:1.15rem;margin:0 0 6px}
+  .guide h3{font-size:1rem;margin:18px 0 6px;color:var(--accent)}
+  .guide p,.guide li{color:#ddd6f3;font-size:.95rem}
+  .guide .legend{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0}
+  .legend-item{display:flex;align-items:center;gap:7px;font-size:.85rem;color:var(--muted)}
+  .swatch{width:14px;height:14px;border-radius:4px;border:2px solid}
+  details{border:1px solid var(--line);border-radius:10px;padding:0 14px;margin:10px 0;background:rgba(255,255,255,.02)}
+  details summary{cursor:pointer;padding:12px 0;font-weight:600;color:var(--ink)}
+  details[open] summary{border-bottom:1px solid var(--line);margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:.88rem;margin:8px 0}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--accent);font-weight:600}
+  code{background:var(--bg2);padding:1px 6px;border-radius:5px;font-size:.85em}
+  .note{background:rgba(245,158,11,.08);border-left:3px solid var(--accent);
+    padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0;font-size:.9rem}
+  footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:28px;padding:0 16px}
+  .hidden{display:none !important}
+  .trainer-row{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-top:8px}
+  .trainer-row .ctl{flex:1;min-width:120px}
+  @media (max-width:560px){
+    .beat{width:42px;height:58px}
+    .bpm-display{min-width:90px;font-size:2rem}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <img src="icon.svg" alt="" />
+    <h1>Tala Metronome</h1>
+  </div>
+  <p class="tag">A rhythm trainer for Carnatic talas &amp; Hindustani taals — for students and accompanists</p>
+</header>
+
+<div class="wrap">
+
+  <div class="tabs" role="tablist" aria-label="Tradition">
+    <button class="tab" id="tab-carnatic" role="tab" aria-selected="true" aria-controls="panel">Carnatic (South Indian)</button>
+    <button class="tab" id="tab-hindustani" role="tab" aria-selected="false" aria-controls="panel">Hindustani (North Indian)</button>
+  </div>
+
+  <!-- ============ MAIN PLAYER ============ -->
+  <section class="card" id="panel" role="tabpanel" aria-label="Metronome">
+    <div class="controls">
+      <div class="ctl">
+        <label for="tala">Tala / Taal</label>
+        <select id="tala"></select>
+      </div>
+      <div class="ctl" id="jati-wrap">
+        <label for="jati">Jati (Laghu count)</label>
+        <select id="jati">
+          <option value="3">Tisra — 3</option>
+          <option value="4" selected>Chatusra — 4</option>
+          <option value="5">Khanda — 5</option>
+          <option value="7">Misra — 7</option>
+          <option value="9">Sankirna — 9</option>
+        </select>
+      </div>
+      <div class="ctl">
+        <label for="gati" id="gati-label">Gati / Subdivision</label>
+        <select id="gati">
+          <option value="1" selected>None (1 per beat)</option>
+          <option value="2">Duple — 2</option>
+          <option value="3">Tisra — 3</option>
+          <option value="4">Chatusra — 4</option>
+          <option value="5">Khanda — 5</option>
+          <option value="6">Sextuple — 6</option>
+          <option value="7">Misra — 7</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="tempo-row" style="margin-top:18px">
+      <div class="bpm-display"><span id="bpm">80</span><br><small>BPM</small></div>
+      <input type="range" id="tempo" min="30" max="300" value="80" aria-label="Tempo in beats per minute" />
+      <button class="btn" id="tap">Tap tempo</button>
+    </div>
+
+    <div class="viz" id="viz" aria-hidden="true"></div>
+
+    <div class="gesture" id="gesture">
+      <span class="hand" id="g-hand">👏</span>
+      <div>
+        <div class="big" id="g-bol">—</div>
+        <div class="meta" id="g-meta">Press Start to begin</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn primary" id="play" aria-keyshortcuts="Space">▶ Start</button>
+      <button class="btn" id="countin-info" title="Counts one cycle of soft ticks before the first beat">Count-in: <span id="ci-state">Off</span></button>
+    </div>
+
+    <div class="toggles">
+      <label class="toggle"><input type="checkbox" id="t-accent" checked> Accent sam / strong beat</label>
+      <label class="toggle"><input type="checkbox" id="t-sub"> Click subdivisions</label>
+      <label class="toggle"><input type="checkbox" id="t-bols" checked> Speak bols / counts visually</label>
+      <label class="toggle"><input type="checkbox" id="t-vol-loop"> Loop endlessly</label>
+    </div>
+
+    <div class="trainer-row">
+      <div class="ctl">
+        <label for="vol">Volume</label>
+        <input type="range" id="vol" min="0" max="100" value="80" />
+      </div>
+      <div class="ctl">
+        <label for="trainer-step">Tempo trainer: +BPM</label>
+        <input type="number" id="trainer-step" min="0" max="40" value="0" />
+      </div>
+      <div class="ctl">
+        <label for="trainer-every">every N cycles</label>
+        <input type="number" id="trainer-every" min="1" max="32" value="4" />
+      </div>
+    </div>
+    <p class="meta" id="cycle-count" style="text-align:center;color:var(--muted);margin:10px 0 0;font-size:.85rem"></p>
+  </section>
+
+  <!-- ============ GUIDANCE ============ -->
+  <section class="card guide" id="guide-carnatic">
+    <h2>How to keep Carnatic tala</h2>
+    <p>Carnatic tala is kept with the hands using three building blocks called <em>angas</em>. Each akshara
+       (beat) is shown as a box above; follow the highlighted box and make the matching gesture.</p>
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="border-color:var(--sam)"></span> Clap (beat 1 / sam)</span>
+      <span class="legend-item"><span class="swatch" style="border-color:var(--tali)"></span> Finger count / clap</span>
+      <span class="legend-item"><span class="swatch" style="border-color:var(--khali)"></span> Wave (palm up — visarjita)</span>
+    </div>
+
+    <h3>The three angas (gesture units)</h3>
+    <table>
+      <tr><th>Anga</th><th>Symbol</th><th>Counts</th><th>How to show it</th></tr>
+      <tr><td>Laghu</td><td><code>I</code></td><td>3 / 4 / 5 / 7 / 9 (the <em>jati</em>)</td><td>One <strong>clap</strong>, then count remaining beats on the <strong>fingers</strong> (little finger first)</td></tr>
+      <tr><td>Drutam</td><td><code>O</code></td><td>2</td><td>A <strong>clap</strong>, then a <strong>wave</strong> (back of the palm down)</td></tr>
+      <tr><td>Anudrutam</td><td><code>U</code></td><td>1</td><td>A single <strong>clap</strong></td></tr>
+    </table>
+
+    <div class="note"><strong>Jati</strong> changes only the length of the <em>laghu</em>. <strong>Gati (nadai)</strong>
+       is how many equal pulses you subdivide each beat into — switch on “Click subdivisions” to hear them.</div>
+
+    <h3>The Suladi Sapta Talas (7 talas × 5 jatis = 35)</h3>
+    <table>
+      <tr><th>Tala</th><th>Angas</th><th>Aksharas (Chatusra)</th></tr>
+      <tr><td>Dhruva</td><td>I O I I</td><td>14</td></tr>
+      <tr><td>Matya</td><td>I O I</td><td>10</td></tr>
+      <tr><td>Rupaka</td><td>O I</td><td>6</td></tr>
+      <tr><td>Jhampa</td><td>I U O</td><td>7</td></tr>
+      <tr><td>Triputa</td><td>I O O</td><td>8</td></tr>
+      <tr><td>Ata</td><td>I I O O</td><td>14</td></tr>
+      <tr><td>Eka</td><td>I</td><td>4</td></tr>
+    </table>
+    <p><strong>Adi tala</strong> = Chatusra-jati Triputa (8 aksharas: clap + 3 fingers, clap + wave, clap + wave) — the most common tala in Carnatic music.</p>
+
+    <details>
+      <summary>For the novice student</summary>
+      <p>Start with <strong>Adi tala</strong> at a slow tempo (around 50–60 BPM). Watch the boxes and physically
+         clap, count and wave along — do not just listen. Say the count aloud (“1, 2, 3, 4 — clap, wave — clap, wave”).
+         Once steady, switch on subdivisions (try Chatusra gati) to feel the inner pulse, then slowly raise the tempo
+         using the <strong>Tempo trainer</strong> (e.g. +5 BPM every 4 cycles).</p>
+      <p>Next learn <strong>Rupaka</strong> and the two <em>chapu</em> talas (<strong>Misra Chapu</strong> = 7,
+         <strong>Khanda Chapu</strong> = 5), which appear constantly in concerts.</p>
+    </details>
+    <details>
+      <summary>For the accompanying expert</summary>
+      <p>Use it as a steady <em>nadai</em> reference for practising kanakku (calculations), korvais and eduppu
+         (off-beat starts). Set the gati to rehearse tisra/khanda/misra nadai passages against a fixed kala-pramanam.
+         Turn off the visual highlight reliance and use only the sam accent so your internal clock leads. The tempo
+         trainer is useful for building speed on brisk tani-avartanam phrases.</p>
+    </details>
+  </section>
+
+  <section class="card guide hidden" id="guide-hindustani">
+    <h2>How to keep Hindustani taal</h2>
+    <p>A Hindustani taal is a fixed cycle (<em>avartan</em>) of <em>matras</em> (beats) grouped into
+       <em>vibhags</em> (sections). You keep it with claps (<em>tali</em>) and a wave (<em>khali</em>),
+       reciting the drum syllables (<em>bols</em>) of the <em>theka</em>.</p>
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="border-color:var(--sam)"></span> Sam (X) — first beat, the resolution point</span>
+      <span class="legend-item"><span class="swatch" style="border-color:var(--tali)"></span> Tali — a numbered clap</span>
+      <span class="legend-item"><span class="swatch" style="border-color:var(--khali)"></span> Khali (0) — wave of the hand</span>
+    </div>
+
+    <h3>The markers</h3>
+    <table>
+      <tr><th>Marker</th><th>Sign</th><th>What you do</th></tr>
+      <tr><td>Sam</td><td><code>X</code></td><td>The strongest beat — clap. Phrases resolve here; the tabla/dancer “lands” on sam.</td></tr>
+      <tr><td>Tali</td><td><code>2, 3…</code></td><td>A clap that marks the start of a filled vibhag.</td></tr>
+      <tr><td>Khali</td><td><code>0</code></td><td>An “empty” section, shown by a silent <strong>wave</strong> of the palm instead of a clap — felt as a relaxation.</td></tr>
+    </table>
+
+    <h3>Common taals</h3>
+    <table>
+      <tr><th>Taal</th><th>Matras</th><th>Vibhags</th><th>Used for</th></tr>
+      <tr><td>Teentaal</td><td>16</td><td>4+4+4+4</td><td>Khayal, instrumental, the default taal</td></tr>
+      <tr><td>Ektaal</td><td>12</td><td>2×6</td><td>Vilambit (slow) khayal</td></tr>
+      <tr><td>Jhaptaal</td><td>10</td><td>2+3+2+3</td><td>Khayal, instrumental gats</td></tr>
+      <tr><td>Rupak</td><td>7</td><td>3+2+2</td><td>Begins on khali — bhajans, khayal</td></tr>
+      <tr><td>Keherwa</td><td>8</td><td>4+4</td><td>Light music, bhajan, ghazal, folk</td></tr>
+      <tr><td>Dadra</td><td>6</td><td>3+3</td><td>Light classical, thumri, bhajan</td></tr>
+      <tr><td>Chautaal</td><td>12</td><td>6×2</td><td>Dhrupad / pakhawaj</td></tr>
+      <tr><td>Dhamar</td><td>14</td><td>5+2+3+4</td><td>Dhamar / dhrupad</td></tr>
+    </table>
+    <div class="note"><strong>Rupak</strong> is unusual: its <em>sam</em> is also a <em>khali</em> — the cycle begins on the wave, not a clap.</div>
+
+    <details>
+      <summary>For the novice student</summary>
+      <p>Begin with <strong>Teentaal</strong> at a medium tempo. Recite the theka aloud while clapping on tali and
+         waving on khali (beat 9): “Dha Dhin Dhin Dha (clap) … Dha Tin Tin Ta (wave) …”. The point is to always feel
+         where <strong>sam</strong> is. Once comfortable, try <strong>Keherwa</strong> and <strong>Dadra</strong> for
+         lighter genres, then <strong>Jhaptaal</strong> and <strong>Rupak</strong> for the uneven cycles.</p>
+    </details>
+    <details>
+      <summary>For the accompanying expert</summary>
+      <p>Use it as a <em>lehra/nagma</em>-style steady reference for riyaz, solo tabla, or kathak practice. For vilambit
+         work, lower the BPM and switch on subdivisions to keep the long matras even. The bol display follows the theka
+         so you can lock the laggi/relevant fillers to sam. Set tisra subdivision to drill <em>tihais</em> and layakari
+         (double/triple time) against a fixed lay.</p>
+    </details>
+  </section>
+
+  <footer>
+    <p>Built with the Web Audio API — works offline, no data leaves your device.
+       Tip: press <code>Space</code> to start/stop, <code>↑/↓</code> to change tempo.</p>
+    <p><a href="https://github.com/revurpk/metronome" id="gh-link">Source on GitHub</a> · Free &amp; open. Practice well. 🙏</p>
+    <p>© 2026 Pradyumna Revur · Released under the <a href="https://github.com/revurpk/metronome/blob/main/LICENSE">MIT License</a></p>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   DATA: Talas & Taals
+   Each tala = ordered list of beats. Each beat:
+     { label, bol, type:'sam'|'tali'|'khali'|'beat', vibhagStart:bool }
+   For Carnatic we generate beats from anga structure + jati.
+   ============================================================ */
+
+// ---- Carnatic: suladi sapta + chapu ----
+// anga codes: 'I'=laghu (length=jati), 'O'=drutam (2), 'U'=anudrutam (1)
+const CARNATIC = {
+  adi:        { name:"Adi (Chatusra Triputa)", angas:["I","O","O"], fixedJati:4, common:true },
+  triputa:    { name:"Triputa", angas:["I","O","O"], common:true },
+  rupaka_c:   { name:"Rupaka", angas:["O","I"] },
+  jhampa:     { name:"Jhampa", angas:["I","U","O"] },
+  matya:      { name:"Matya", angas:["I","O","I"] },
+  dhruva:     { name:"Dhruva", angas:["I","O","I","I"] },
+  ata:        { name:"Ata", angas:["I","I","O","O"] },
+  eka:        { name:"Eka", angas:["I"] },
+  // chapu talas: explicit beat groupings (claps), jati-independent
+  misra_chapu:{ name:"Misra Chapu (7)", chapu:[3,2,2], noJati:true },
+  khanda_chapu:{name:"Khanda Chapu (5)", chapu:[2,3], noJati:true },
+  tisra_chapu:{ name:"Tisra/Roopaka Chapu (3)", chapu:[1,2], noJati:true },
+  sankirna_chapu:{name:"Sankirna Chapu (9)", chapu:[4,5], noJati:true },
+};
+
+function buildCarnatic(key, jati){
+  const t = CARNATIC[key];
+  const beats = [];
+  if(t.chapu){
+    // chapu: each group's first beat is a clap (tali), beat 0 is sam.
+    let idx=0;
+    t.chapu.forEach((len,gi)=>{
+      for(let i=0;i<len;i++){
+        const first = i===0;
+        beats.push({
+          label: String(idx+1),
+          bol: first ? (idx===0?"clap":"clap") : "·",
+          type: idx===0 ? "sam" : (first ? "tali":"beat"),
+          vibhagStart: first,
+          hand: idx===0 ? "clap" : (first? "clap":"count"),
+        });
+        idx++;
+      }
+    });
+    return beats;
+  }
+  const j = t.fixedJati || jati;
+  t.angas.forEach((a,ai)=>{
+    if(a==="I"){ // laghu: clap + (j-1) finger counts
+      for(let i=0;i<j;i++){
+        beats.push({
+          label: i===0?"":(""+(i+1)),
+          bol: i===0 ? "Clap" : "F"+i,
+          type: (ai===0&&i===0)?"sam":(i===0?"tali":"beat"),
+          vibhagStart:i===0,
+          hand:i===0?"clap":"count",
+        });
+      }
+    } else if(a==="O"){ // drutam: clap + wave
+      beats.push({label:"",bol:"Clap",type:(ai===0)?"sam":"tali",vibhagStart:true,hand:"clap"});
+      beats.push({label:"",bol:"Wave",type:"khali",vibhagStart:false,hand:"wave"});
+    } else { // anudrutam: single clap
+      beats.push({label:"",bol:"Clap",type:(ai===0)?"sam":"tali",vibhagStart:true,hand:"clap"});
+    }
+  });
+  // number the beats
+  beats.forEach((b,i)=>{ b.label=String(i+1); });
+  return beats;
+}
+
+// ---- Hindustani: explicit theka ----
+// b = matra. type derived from vibhag markers below.
+function H(bols, sizes, markers){
+  // bols: array of bol strings (length = total matras)
+  // sizes: vibhag lengths; markers: per-vibhag 'X'|number|'0'
+  const beats=[]; let idx=0;
+  sizes.forEach((sz,vi)=>{
+    for(let i=0;i<sz;i++){
+      const first=i===0;
+      let type="beat";
+      if(first){
+        const m=markers[vi];
+        if(m==="X") type="sam";
+        else if(m==="0") type="khali";
+        else type="tali";
+      }
+      beats.push({
+        label:String(idx+1),
+        bol:bols[idx]||"·",
+        type, vibhagStart:first,
+        marker:first?markers[vi]:"",
+        hand: type==="khali"?"wave":(first?"clap":"count"),
+      });
+      idx++;
+    }
+  });
+  return beats;
+}
+
+const HINDUSTANI = {
+  teentaal:{ name:"Teentaal (16)", build:()=>H(
+    ["Dha","Dhin","Dhin","Dha","Dha","Dhin","Dhin","Dha","Dha","Tin","Tin","Ta","Ta","Dhin","Dhin","Dha"],
+    [4,4,4,4], ["X","2","0","3"]) },
+  ektaal:{ name:"Ektaal (12)", build:()=>H(
+    ["Dhin","Dhin","Dha","Ge","Tirakita","Tu","Na","Kat","Ta","Dha","Ge","Tirakita"],
+    [2,2,2,2,2,2], ["X","0","2","0","3","4"]) },
+  jhaptaal:{ name:"Jhaptaal (10)", build:()=>H(
+    ["Dhi","Na","Dhi","Dhi","Na","Ti","Na","Dhi","Dhi","Na"],
+    [2,3,2,3], ["X","2","0","3"]) },
+  rupak:{ name:"Rupak (7)", build:()=>H(
+    ["Tin","Tin","Na","Dhin","Na","Dhin","Na"],
+    [3,2,2], ["0","1","2"]) },  // sam is khali
+  keherwa:{ name:"Keherwa (8)", build:()=>H(
+    ["Dha","Ge","Na","Ti","Na","Ka","Dhin","Na"],
+    [4,4], ["X","0"]) },
+  dadra:{ name:"Dadra (6)", build:()=>H(
+    ["Dha","Dhin","Na","Dha","Tin","Na"],
+    [3,3], ["X","0"]) },
+  chautaal:{ name:"Chautaal (12)", build:()=>H(
+    ["Dha","Dha","Din","Ta","Kit","Dha","Din","Ta","Tit","Kat","Gadi","Gan"],
+    [2,2,2,2,2,2], ["X","0","2","0","3","4"]) },
+  dhamar:{ name:"Dhamar (14)", build:()=>H(
+    ["Ka","Dhi","Ta","Dhi","Ta","Dha","-","Ga","Ti","Ta","Ti","Ta","Tha","-"],
+    [5,2,3,4], ["X","2","0","3"]) },
+  tilwada:{ name:"Tilwada (16)", build:()=>H(
+    ["Dha","Tirakita","Dhin","Dhin","Dha","Dha","Tin","Tin","Ta","Tirakita","Dhin","Dhin","Dha","Dha","Dhin","Dhin"],
+    [4,4,4,4], ["X","2","0","3"]) },
+  deepchandi:{ name:"Deepchandi (14)", build:()=>H(
+    ["Dha","Dhin","-","Dha","Dha","Tin","-","Ta","Tin","-","Dha","Dha","Dhin","-"],
+    [3,4,3,4], ["X","2","0","3"]) },
+};
+
+/* ============================================================
+   AUDIO ENGINE — lookahead scheduler
+   ============================================================ */
+const Engine = (()=> {
+  let ctx=null, master=null;
+  let beats=[], pos=0, gati=1, subdiv=false;
+  let nextTime=0, beatDur=0, running=false, timer=null;
+  let cycleCount=0, beatInCycle=0;
+  let accentSam=true, volume=0.8;
+  let countIn=false, countingIn=false, countPos=0;
+  let onBeat=()=>{}, onCycle=()=>{};
+  let trainerStep=0, trainerEvery=4, loop=true, bpm=80;
+
+  const LOOKAHEAD=0.1, INTERVAL=25;
+
+  function ensure(){
+    if(!ctx){ ctx=new (window.AudioContext||window.webkitAudioContext)();
+      master=ctx.createGain(); master.gain.value=volume; master.connect(ctx.destination); }
+    if(ctx.state==="suspended") ctx.resume();
+  }
+
+  // click: type drives pitch/timbre
+  function click(type, time, soft){
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    let freq=900, dur=0.05, peak=0.9;
+    if(type==="sam"){ freq=1400; peak=1.0; dur=0.07; }
+    else if(type==="tali"){ freq=1050; peak=0.75; }
+    else if(type==="khali"){ freq=620; peak=0.55; dur=0.06; } // duller wave
+    else { freq=820; peak=0.5; }
+    if(soft){ freq=freq*0.6; peak=0.18; dur=0.03; }
+    if(!accentSam && type==="sam"){ freq=1050; peak=0.75; }
+    o.type = type==="khali" ? "sine":"triangle";
+    o.frequency.value=freq;
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(peak, time+0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, time+dur);
+    o.connect(g); g.connect(master);
+    o.start(time); o.stop(time+dur+0.02);
+  }
+
+  function scheduleBeat(time){
+    if(countingIn){
+      click(countPos===0?"tali":"beat", time, true);
+      return;
+    }
+    const b=beats[pos];
+    click(b.type, time);
+    if(subdiv && gati>1){
+      for(let s=1;s<gati;s++){
+        click("sub", time + beatDur*(s/gati), true);
+      }
+    }
+  }
+
+  function advance(){
+    nextTime += beatDur;
+    if(countingIn){
+      countPos++;
+      if(countPos>=beats.length){ countingIn=false; countPos=0; pos=0; beatInCycle=0; cycleCount=0; }
+      return;
+    }
+    pos=(pos+1)%beats.length;
+    beatInCycle++;
+    if(pos===0){
+      cycleCount++;
+      beatInCycle=0;
+      onCycle(cycleCount);
+      if(!loop){ running=false; }
+      // tempo trainer
+      if(trainerStep>0 && cycleCount%trainerEvery===0){
+        setBpm(Math.min(300, bpm+trainerStep));
+      }
+    }
+  }
+
+  function loopFn(){
+    if(!running){ stop(); return; }
+    while(nextTime < ctx.currentTime + LOOKAHEAD){
+      const drawPos = countingIn? -1 : pos;
+      const drawTime = nextTime;
+      scheduleBeat(nextTime);
+      // schedule visual
+      const cP=countingIn, cPos=countPos;
+      const delay=(drawTime-ctx.currentTime)*1000;
+      setTimeout(()=>{ onBeat(cP?-1:drawPos, cP, cPos); }, Math.max(0,delay));
+      advance();
+      if(!running) break;
+    }
+    timer=setTimeout(loopFn, INTERVAL);
+  }
+
+  function recalc(){ beatDur = 60/bpm; }
+
+  function setBpm(v){ bpm=v; recalc(); if(window._onBpm) window._onBpm(v); }
+
+  function start(cfg){
+    ensure();
+    beats=cfg.beats; gati=cfg.gati; subdiv=cfg.subdiv;
+    accentSam=cfg.accentSam; loop=cfg.loop;
+    trainerStep=cfg.trainerStep; trainerEvery=cfg.trainerEvery;
+    onBeat=cfg.onBeat; onCycle=cfg.onCycle;
+    bpm=cfg.bpm; recalc();
+    pos=0; beatInCycle=0; cycleCount=0;
+    countIn=cfg.countIn; countingIn=cfg.countIn; countPos=0;
+    running=true;
+    nextTime=ctx.currentTime+0.06;
+    loopFn();
+  }
+  function stop(){
+    running=false; if(timer) clearTimeout(timer); timer=null;
+  }
+  function setVolume(v){ volume=v; if(master) master.gain.value=v; }
+  function setLive(cfg){ // live updates while running
+    if(cfg.gati!=null) gati=cfg.gati;
+    if(cfg.subdiv!=null) subdiv=cfg.subdiv;
+    if(cfg.accentSam!=null) accentSam=cfg.accentSam;
+    if(cfg.loop!=null) loop=cfg.loop;
+    if(cfg.trainerStep!=null) trainerStep=cfg.trainerStep;
+    if(cfg.trainerEvery!=null) trainerEvery=cfg.trainerEvery;
+  }
+  return { start, stop, setBpm, setVolume, setLive, isRunning:()=>running, ensure };
+})();
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $=s=>document.querySelector(s);
+let tradition="carnatic";
+let currentBeats=[];
+
+const el={
+  talaSel:$("#tala"), jatiWrap:$("#jati-wrap"), jati:$("#jati"),
+  gati:$("#gati"), gatiLabel:$("#gati-label"),
+  tempo:$("#tempo"), bpm:$("#bpm"), tap:$("#tap"),
+  viz:$("#viz"), gHand:$("#g-hand"), gBol:$("#g-bol"), gMeta:$("#g-meta"),
+  play:$("#play"), vol:$("#vol"),
+  tAccent:$("#t-accent"), tSub:$("#t-sub"), tBols:$("#t-bols"), tLoop:$("#t-vol-loop"),
+  trainerStep:$("#trainer-step"), trainerEvery:$("#trainer-every"),
+  cycleCount:$("#cycle-count"),
+  ciBtn:$("#countin-info"), ciState:$("#ci-state"),
+};
+
+let countIn=false;
+
+function populateTalas(){
+  el.talaSel.innerHTML="";
+  const src = tradition==="carnatic"?CARNATIC:HINDUSTANI;
+  for(const k in src){
+    const o=document.createElement("option");
+    o.value=k; o.textContent=src[k].name;
+    el.talaSel.appendChild(o);
+  }
+  // Carnatic-only jati control
+  el.jatiWrap.style.display = tradition==="carnatic" ? "" : "none";
+  el.gatiLabel.textContent = tradition==="carnatic" ? "Gati / Nadai" : "Subdivision (laya)";
+}
+
+function getBeats(){
+  if(tradition==="carnatic"){
+    const key=el.talaSel.value;
+    const t=CARNATIC[key];
+    // hide jati for chapu / fixed
+    el.jati.disabled = !!(t.chapu || t.fixedJati);
+    return buildCarnatic(key, parseInt(el.jati.value,10));
+  } else {
+    el.jati.disabled=true;
+    return HINDUSTANI[el.talaSel.value].build();
+  }
+}
+
+function renderViz(beats, activeIdx){
+  // group into vibhags for display
+  el.viz.innerHTML="";
+  let group=null;
+  beats.forEach((b,i)=>{
+    if(b.vibhagStart || !group){
+      group=document.createElement("div"); group.className="vibhag"; el.viz.appendChild(group);
+    }
+    const d=document.createElement("div");
+    d.className="beat t-"+b.type+(i===activeIdx?" active":"");
+    d.dataset.i=i;
+    const num=document.createElement("span"); num.className="num"; num.textContent=b.label;
+    const bol=document.createElement("span"); bol.className="bol";
+    bol.textContent = el.tBols.checked ? prettyBol(b) : (b.marker||"");
+    const sym=document.createElement("span"); sym.className="sym"; sym.textContent=symFor(b);
+    d.appendChild(num); d.appendChild(bol); d.appendChild(sym);
+    group.appendChild(d);
+  });
+}
+
+function prettyBol(b){
+  if(tradition==="hindustani") return b.bol;
+  // carnatic: show gesture word
+  if(b.hand==="clap") return "clap";
+  if(b.hand==="wave") return "wave";
+  return b.bol.startsWith("F")? ("f"+b.bol.slice(1)) : "·";
+}
+function symFor(b){
+  if(b.type==="sam") return "X";
+  if(b.type==="khali") return "○";
+  if(b.type==="tali") return b.marker||"•";
+  return "";
+}
+function handEmoji(b){
+  if(b.hand==="wave") return "🖐️";
+  if(b.hand==="clap") return "👏";
+  return "👆";
+}
+
+function highlight(idx){
+  document.querySelectorAll(".beat").forEach(d=>{
+    d.classList.toggle("active", parseInt(d.dataset.i,10)===idx);
+  });
+  if(idx>=0 && currentBeats[idx]){
+    const b=currentBeats[idx];
+    el.gHand.textContent=handEmoji(b);
+    el.gBol.textContent = tradition==="hindustani" ? b.bol : prettyBol(b);
+    let meta = "Beat "+b.label+"/"+currentBeats.length;
+    if(b.type==="sam") meta+=" · SAM";
+    else if(b.type==="khali") meta+=" · khali (wave)";
+    else if(b.type==="tali") meta+=" · tali"+(b.marker?(" "+b.marker):"");
+    el.gMeta.textContent=meta;
+  }
+}
+
+function rebuild(){
+  currentBeats=getBeats();
+  renderViz(currentBeats, -1);
+  el.gBol.textContent="—";
+  el.gMeta.textContent = Engine.isRunning()? "" : "Press Start to begin";
+  el.gHand.textContent="👏";
+}
+
+function startStop(){
+  if(Engine.isRunning()){
+    Engine.stop();
+    el.play.textContent="▶ Start";
+    el.gMeta.textContent="Press Start to begin";
+    document.querySelectorAll(".beat.active").forEach(d=>d.classList.remove("active"));
+    return;
+  }
+  currentBeats=getBeats();
+  renderViz(currentBeats,-1);
+  Engine.start({
+    beats: currentBeats,
+    gati: parseInt(el.gati.value,10),
+    subdiv: el.tSub.checked,
+    accentSam: el.tAccent.checked,
+    loop: true, // loop handled; "loop endlessly" toggle kept for future single-shot
+    countIn: countIn,
+    bpm: parseInt(el.tempo.value,10),
+    trainerStep: parseInt(el.trainerStep.value,10)||0,
+    trainerEvery: Math.max(1,parseInt(el.trainerEvery.value,10)||4),
+    onBeat: (idx,counting,cPos)=>{
+      if(counting){
+        el.gMeta.textContent="Count-in… "+(cPos+1);
+        el.gBol.textContent="•";
+        el.gHand.textContent="⏳";
+      } else highlight(idx);
+    },
+    onCycle: (n)=>{ el.cycleCount.textContent="Cycles (avartana/avartan): "+n; },
+  });
+  el.play.textContent="⏹ Stop";
+}
+
+/* ---- Tap tempo ---- */
+let taps=[];
+function tapTempo(){
+  const now=performance.now();
+  taps=taps.filter(t=>now-t<2500); taps.push(now);
+  if(taps.length>=2){
+    const intervals=[]; for(let i=1;i<taps.length;i++) intervals.push(taps[i]-taps[i-1]);
+    const avg=intervals.reduce((a,b)=>a+b,0)/intervals.length;
+    let b=Math.round(60000/avg);
+    b=Math.max(30,Math.min(300,b));
+    setTempo(b);
+  }
+}
+function setTempo(b){
+  el.tempo.value=b; el.bpm.textContent=b; Engine.setBpm(b);
+}
+window._onBpm=(v)=>{ el.tempo.value=v; el.bpm.textContent=v; };
+
+/* ---- Events ---- */
+$("#tab-carnatic").addEventListener("click",()=>switchTab("carnatic"));
+$("#tab-hindustani").addEventListener("click",()=>switchTab("hindustani"));
+function switchTab(t){
+  if(Engine.isRunning()) startStop();
+  tradition=t;
+  $("#tab-carnatic").setAttribute("aria-selected", t==="carnatic");
+  $("#tab-hindustani").setAttribute("aria-selected", t==="hindustani");
+  $("#guide-carnatic").classList.toggle("hidden", t!=="carnatic");
+  $("#guide-hindustani").classList.toggle("hidden", t!=="hindustani");
+  populateTalas(); rebuild();
+}
+
+el.talaSel.addEventListener("change", rebuild);
+el.jati.addEventListener("change", rebuild);
+el.tBols.addEventListener("change", ()=>renderViz(currentBeats,-1));
+el.gati.addEventListener("change", ()=>Engine.setLive({gati:parseInt(el.gati.value,10)}));
+el.tSub.addEventListener("change", ()=>Engine.setLive({subdiv:el.tSub.checked}));
+el.tAccent.addEventListener("change", ()=>Engine.setLive({accentSam:el.tAccent.checked}));
+el.trainerStep.addEventListener("change", ()=>Engine.setLive({trainerStep:parseInt(el.trainerStep.value,10)||0}));
+el.trainerEvery.addEventListener("change", ()=>Engine.setLive({trainerEvery:Math.max(1,parseInt(el.trainerEvery.value,10)||4)}));
+el.tempo.addEventListener("input", ()=>setTempo(parseInt(el.tempo.value,10)));
+el.tap.addEventListener("click", tapTempo);
+el.play.addEventListener("click", startStop);
+el.vol.addEventListener("input", ()=>Engine.setVolume(parseInt(el.vol.value,10)/100));
+el.ciBtn.addEventListener("click", ()=>{ countIn=!countIn; el.ciState.textContent=countIn?"On":"Off"; });
+
+document.addEventListener("keydown",(e)=>{
+  if(e.target.tagName==="SELECT"||e.target.tagName==="INPUT") {
+    if(e.code!=="Space") return;
+  }
+  if(e.code==="Space"){ e.preventDefault(); startStop(); }
+  else if(e.code==="ArrowUp"){ e.preventDefault(); setTempo(Math.min(300,parseInt(el.tempo.value,10)+1)); }
+  else if(e.code==="ArrowDown"){ e.preventDefault(); setTempo(Math.max(30,parseInt(el.tempo.value,10)-1)); }
+});
+
+// init
+populateTalas();
+rebuild();
+Engine.setVolume(0.8);
+</script>
+</body>
+</html>

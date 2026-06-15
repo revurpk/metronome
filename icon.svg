@@ -1,0 +1,50 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tala Metronome icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3a1d6e"/>
+      <stop offset="0.55" stop-color="#7b2d8e"/>
+      <stop offset="1" stop-color="#c2410c"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.6">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- rounded tile -->
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#glow)"/>
+
+  <!-- avartana / tala cycle ring of beat dots -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="10">
+    <circle cx="256" cy="256" r="180"/>
+  </g>
+  <g fill="#fde68a">
+    <!-- 8 beats of a cycle; the "sam"/first beat enlarged -->
+    <circle cx="256" cy="76"  r="20"/>
+    <circle cx="383" cy="129" r="11"/>
+    <circle cx="436" cy="256" r="11"/>
+    <circle cx="383" cy="383" r="11"/>
+    <circle cx="256" cy="436" r="11"/>
+    <circle cx="129" cy="383" r="11"/>
+    <circle cx="76"  cy="256" r="11"/>
+    <circle cx="129" cy="129" r="11"/>
+  </g>
+
+  <!-- metronome body (pyramid) -->
+  <g>
+    <path d="M256 150 L330 372 L182 372 Z" fill="#1e1b4b" stroke="#0f0d2e" stroke-width="6" stroke-linejoin="round"/>
+    <!-- scale slot -->
+    <rect x="248" y="186" width="16" height="150" rx="8" fill="#0f0d2e"/>
+    <!-- pendulum rod + weight, swung to the right -->
+    <g stroke="url(#metal)" stroke-width="11" stroke-linecap="round">
+      <line x1="256" y1="336" x2="300" y2="172"/>
+    </g>
+    <rect x="286" y="196" width="30" height="22" rx="5" fill="url(#metal)" transform="rotate(15 301 207)"/>
+    <circle cx="256" cy="336" r="13" fill="url(#metal)"/>
+  </g>
+</svg>
