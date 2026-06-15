@@ -1,37 +1,40 @@
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tala Metronome — mridangam">
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tala Metronome — ghatam">
   <defs>
     <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#3a1d6e"/>
       <stop offset="0.55" stop-color="#7b2d8e"/>
       <stop offset="1" stop-color="#c2410c"/>
     </linearGradient>
-    <linearGradient id="w" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#d9933f"/>
-      <stop offset="1" stop-color="#7a481c"/>
-    </linearGradient>
-    <radialGradient id="s" cx="0.42" cy="0.4" r="0.8">
-      <stop offset="0" stop-color="#fdf6e4"/>
-      <stop offset="1" stop-color="#dcc89c"/>
+    <radialGradient id="clay" cx="0.4" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#e7ad72"/>
+      <stop offset="0.55" stop-color="#bd7338"/>
+      <stop offset="1" stop-color="#73401c"/>
     </radialGradient>
-    <radialGradient id="k" cx="0.4" cy="0.36" r="0.85">
-      <stop offset="0" stop-color="#404048"/>
-      <stop offset="1" stop-color="#0d0d12"/>
+    <radialGradient id="hole" cx="0.5" cy="0.4" r="0.7">
+      <stop offset="0" stop-color="#3a2415"/>
+      <stop offset="1" stop-color="#140b05"/>
     </radialGradient>
   </defs>
   <rect width="64" height="64" rx="15" fill="url(#b)"/>
-  <!-- mridangam barrel, horizontal -->
-  <path d="M14 26 C 26 22, 38 23, 46 27 L 46 44 C 38 48, 26 49, 14 45 Z" fill="url(#w)"/>
-  <!-- far (left) head -->
-  <ellipse cx="14" cy="35.5" rx="3.4" ry="9.5" fill="#5d3618"/>
-  <ellipse cx="15.5" cy="35.5" rx="2" ry="8" fill="#caa86f"/>
-  <!-- lacing straps -->
-  <g stroke="#6e3f18" stroke-width="1.6" opacity="0.5">
-    <line x1="23" y1="24" x2="21" y2="47"/>
-    <line x1="32" y1="24" x2="31" y2="48"/>
-  </g>
-  <!-- near (right) head facing viewer with syahi -->
-  <ellipse cx="46" cy="35.5" rx="11" ry="13.5" fill="#5d3618"/>
-  <ellipse cx="46" cy="35.5" rx="9" ry="11.5" fill="url(#s)"/>
-  <ellipse cx="46" cy="35.5" rx="7" ry="9.3" fill="none" stroke="#17171c" stroke-width="2" opacity="0.85"/>
-  <ellipse cx="46" cy="35.5" rx="4.2" ry="5.6" fill="url(#k)"/>
+
+  <!-- contact shadow -->
+  <ellipse cx="32" cy="54" rx="17" ry="3.4" fill="#000" opacity="0.22"/>
+
+  <!-- ghatam clay body -->
+  <path d="M32 18
+           C 22 18, 16.5 23, 14.5 31
+           C 12.5 40, 16 50, 24 53
+           C 29 55, 35 55, 40 53
+           C 48 50, 51.5 40, 49.5 31
+           C 47.5 23, 42 18, 32 18 Z" fill="url(#clay)"/>
+
+  <!-- decorative band near the shoulder -->
+  <path d="M18.5 27 C 26 24.5, 38 24.5, 45.5 27" fill="none" stroke="#5c3015" stroke-width="1.4" opacity="0.45"/>
+
+  <!-- sheen highlight on the belly -->
+  <ellipse cx="25" cy="32" rx="6" ry="9" fill="#ffe9cf" opacity="0.18"/>
+
+  <!-- mouth: clay rim + dark opening -->
+  <ellipse cx="32" cy="19" rx="8.6" ry="3.6" fill="#9a5526"/>
+  <ellipse cx="32" cy="18.4" rx="6" ry="2.4" fill="url(#hole)"/>
 </svg>
