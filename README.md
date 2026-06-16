@@ -44,10 +44,18 @@ are served verbatim.
 | File | Purpose |
 |------|---------|
 | `index.html` | The entire app (HTML + CSS + JS, self-contained) |
-| `icon.svg` | App icon / apple-touch-icon (tabla + mridangam) |
-| `favicon.svg` | Favicon (mridangam) |
+| `icon.svg` | In-app logo / SVG icon (tabla + mridangam + ghatam) |
+| `icon-fullbleed.svg` | Square (no rounded corners) source used to render the PNGs |
+| `favicon.svg` | Favicon (ghatam) |
+| `apple-touch-icon.png` | 180×180 iOS home-screen icon |
+| `icon-192.png`, `icon-512.png` | Android / PWA install icons |
+| `manifest.webmanifest` | PWA manifest (name, colors, icons) |
 | `.github/workflows/deploy.yml` | GitHub Pages deploy workflow |
 | `.nojekyll` | Disables Jekyll processing on Pages |
+
+The PNG touch icons are rasterized from `icon-fullbleed.svg` (drawn full-bleed so iOS/Android
+apply their own corner mask). To regenerate, render that SVG to a `<canvas>` at 180 / 192 / 512 px
+and export `image/png`.
 
 ## Audio on iOS / Lockdown Mode
 

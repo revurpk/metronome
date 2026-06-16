@@ -11,7 +11,16 @@
 <meta name="description" content="A free, offline-capable metronome for South Indian Carnatic talas and North Indian Hindustani taals, with hand-gesture and bol guidance for students and accompanists." />
 <meta name="theme-color" content="#3a1d6e" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-<link rel="apple-touch-icon" href="icon.svg" />
+<!-- iOS home-screen / web-app touch icon (Safari ignores SVG here, needs PNG) -->
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content="Tala" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="mobile-web-app-capable" content="yes" />
+<!-- Android / PWA install icons -->
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
 <style>
   :root{
     --bg:#140f2e; --bg2:#1d1542; --panel:#231a4d; --panel2:#2c2160;
