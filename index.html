@@ -355,12 +355,91 @@
     </details>
   </section>
 
+  <!-- ============ SHRUTI BOX (DRONE) ============ -->
+  <section class="card" id="shruti-card" aria-label="Shruti box">
+    <h2 style="margin:0 0 4px;font-size:1.2rem">🪈 Shruti Box <span style="color:var(--muted);font-weight:500;font-size:.9rem">— the drone (sur peti / electronic tanpura)</span></h2>
+    <p style="color:var(--muted);margin:0 0 14px;font-size:.92rem">A continuous reference pitch. Play it while you practise so every note is sung or played against a fixed <em>Sa</em>. Runs at the same time as the metronome.</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="sa-pitch">Sa (tonic) pitch</label>
+        <select id="sa-pitch"></select>
+      </div>
+      <div class="ctl">
+        <label for="sa-fine">Fine tune: <span id="sa-fine-val">0</span> cents</label>
+        <input type="range" id="sa-fine" min="-50" max="50" value="0" />
+      </div>
+      <div class="ctl">
+        <label for="drone-vol">Drone volume</label>
+        <input type="range" id="drone-vol" min="0" max="100" value="55" />
+      </div>
+    </div>
+
+    <div class="toggles" style="margin-top:16px">
+      <label class="toggle"><input type="checkbox" id="d-sa" checked disabled> Sa (always on)</label>
+      <label class="toggle"><input type="checkbox" id="d-pa" checked> Pa (fifth) — most ragas</label>
+      <label class="toggle"><input type="checkbox" id="d-ma"> Ma (fourth) — for ragas without Pa</label>
+      <label class="toggle"><input type="checkbox" id="d-upper" checked> Upper Sa</label>
+      <label class="toggle"><input type="checkbox" id="d-lower"> Lower Sa (mandra)</label>
+      <label class="toggle"><input type="checkbox" id="d-ni"> Ni (below Sa)</label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn primary" id="drone-play">▶ Start drone</button>
+      <span class="pill" id="drone-state" style="align-self:center">stopped</span>
+    </div>
+  </section>
+
+  <section class="card guide" id="shruti-guide">
+    <h2>Shruti for the absolute beginner</h2>
+    <p><strong>Shruti</strong> means your pitch — your <em>Sa</em>, the tonic that everything else is measured
+       against. A shruti box (or tanpura) holds that Sa steadily so your ear has a fixed anchor. “Keeping shruti”
+       means staying in tune <em>relative to that Sa</em>; it is the single most important habit in Indian music.</p>
+
+    <h3>1 · Choose <em>your</em> Sa</h3>
+    <p>Sa is not a fixed frequency — each singer picks their own. Hum your most comfortable, relaxed low note and
+       match the drone’s Sa to it. As a rough guide: many <strong>men</strong> sit around <strong>C–D</strong>,
+       many <strong>women and children</strong> around <strong>G–A</strong>. Pick one Sa and stick with it for
+       weeks so your voice builds muscle memory. Instrumentalists tune their Sa to the instrument.</p>
+
+    <h3>2 · Pa or Ma?</h3>
+    <p>The drone always sounds <strong>Sa</strong> (and usually the octave Sa). The other voice is normally
+       <strong>Pa</strong> (the fifth) — leave “Pa” on for the vast majority of ragas. Switch to <strong>Ma</strong>
+       (the fourth) only for ragas that omit Pa (e.g. Malkauns / those that lean on Ma). Beginners: start with Sa + Pa.</p>
+
+    <h3>3 · Lock your voice to the drone</h3>
+    <ol>
+      <li>Start the drone and just <strong>listen</strong> for a few seconds — let the Sa fill your ear.</li>
+      <li>Hum a soft <strong>“Saaa”</strong> and slide your pitch until the wobble/roughness between your voice and
+          the drone <em>disappears</em>. When you are exactly in tune the sound becomes smooth and “locks”. That
+          beating you hear when slightly off is your tuning feedback — chase the smoothness.</li>
+      <li>Hold it. Then sing up the scale <strong>Sa Ri Ga Ma Pa Dha Ni Sa</strong> and back, checking each note
+          against the ever-present Sa. Sa and Pa should feel rock-solid; use them as checkpoints.</li>
+    </ol>
+
+    <h3>4 · How to <em>maintain</em> shruti (stay in tune)</h3>
+    <ul>
+      <li><strong>Always practise with the drone on.</strong> Never sing or play long passages without a reference Sa.</li>
+      <li><strong>Do daily long tones (akaar):</strong> hold Sa, then Pa, then Sa for as long as your breath lasts,
+          keeping zero beating against the drone. 5–10 minutes builds intonation fast.</li>
+      <li><strong>Listen for beats.</strong> Roughness = out of tune; smoothness = in tune. Train your ear to want the smoothness.</li>
+      <li><strong>Return to Sa</strong> constantly — after every phrase, touch Sa to confirm you haven’t drifted.</li>
+      <li><strong>Record yourself</strong> with the drone and play it back; you’ll hear drift you missed live.</li>
+      <li><strong>Use headphones</strong> for fine work, and keep one consistent Sa so the pitch becomes instinctive.</li>
+    </ul>
+
+    <div class="note"><strong>Caring for a physical shruti box / harmonium:</strong> pump the bellows slowly and evenly
+       for a steady tone, keep the reeds free of dust, don’t force the bellows, and store it flat in a dry place away
+       from damp and direct heat so the reeds and bellows cloth last. This on-screen drone needs none of that — it is
+       fully offline and private, with nothing leaving your device.</div>
+  </section>
+
   <footer>
     <p>Built with the Web Audio API — works offline, no data leaves your device.
        Tip: press <code>Space</code> to start/stop, <code>↑/↓</code> to change tempo.</p>
     <p><a href="https://github.com/revurpk/metronome" id="gh-link">Source on GitHub</a> · Free &amp; open. Practice well. 🙏</p>
     <p>© 2026 Pradyumna Revur · Released under the <a href="https://github.com/revurpk/metronome/blob/main/LICENSE">MIT License</a></p>
-    <p style="opacity:.6;font-size:.78rem">build 2026-06-14h · <span id="audio-status">audio: initialising…</span></p>
+    <p style="opacity:.6;font-size:.78rem">build 2026-06-14i · <span id="audio-status">audio: initialising…</span></p>
   </footer>
 </div>
 
@@ -969,6 +1048,167 @@ document.addEventListener("keydown",(e)=>{
   else if(e.code==="ArrowUp"){ e.preventDefault(); setTempo(Math.min(300,parseInt(el.tempo.value,10)+1)); }
   else if(e.code==="ArrowDown"){ e.preventDefault(); setTempo(Math.max(30,parseInt(el.tempo.value,10)-1)); }
 });
+
+/* ============================================================
+   SHRUTI BOX (drone) — independent engine
+   Web Audio (rich tanpura-ish tone) with a seamless looped-WAV
+   fallback for environments that block Web Audio (iOS Lockdown).
+   ============================================================ */
+const Drone = (()=>{
+  const SR=22050;
+  // harmonic amplitudes (1st..) give a soft reed/tanpura-ish timbre
+  const HARM=[1, 0.5, 0.32, 0.2, 0.12, 0.07, 0.04];
+  let ctx=null, master=null, voices=[], webAudio=true;
+  let playing=false, saHz=146.83, cents=0, vol=0.55;
+  let ratios={ sa:true, pa:true, ma:false, upper:true, lower:false, ni:false };
+  // ratios (just intonation): pa 3/2, ma 4/3, upper 2, lower 1/2, ni (below Sa) 15/16
+  const RATIO={ sa:1, pa:1.5, ma:4/3, upper:2, lower:0.5, ni:15/16 };
+  const GAINS={ sa:1, pa:0.5, ma:0.5, upper:0.42, lower:0.6, ni:0.32 };
+  // loop fallback
+  let loopEl=null, loopUrl=null;
+
+  function activeList(){
+    const out=[["sa",1]];
+    if(ratios.pa) out.push(["pa",RATIO.pa]);
+    if(ratios.ma) out.push(["ma",RATIO.ma]);
+    if(ratios.upper) out.push(["upper",RATIO.upper]);
+    if(ratios.lower) out.push(["lower",RATIO.lower]);
+    if(ratios.ni) out.push(["ni",RATIO.ni]);
+    return out;
+  }
+  function freqFor(r){ return saHz * r * Math.pow(2, cents/1200); }
+
+  /* ---- Web Audio path ---- */
+  function ensure(){
+    if(!webAudio) return false;
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC){ webAudio=false; return false; }
+    if(!ctx){
+      try{ ctx=new AC(); master=ctx.createGain(); master.gain.value=0;
+        const lp=ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=2600;
+        master.connect(lp); lp.connect(ctx.destination);
+      }catch(e){ webAudio=false; return false; }
+    }
+    return true;
+  }
+  function makeWave(){
+    const n=HARM.length+1, real=new Float32Array(n), imag=new Float32Array(n);
+    for(let i=0;i<HARM.length;i++) imag[i+1]=HARM[i];
+    return ctx.createPeriodicWave(real, imag, {disableNormalization:false});
+  }
+  function buildVoices(){
+    clearVoices();
+    const wave=makeWave();
+    activeList().forEach(([k,r])=>{
+      const g=ctx.createGain(); g.gain.value=GAINS[k]; g.connect(master);
+      // two slightly detuned oscillators per note for a gentle chorus/shimmer
+      [-4,4].forEach(det=>{
+        const o=ctx.createOscillator(); o.setPeriodicWave(wave);
+        o.frequency.value=freqFor(r); o.detune.value=det;
+        o.connect(g); o.start(); voices.push(o);
+      });
+      voices.push(g);
+    });
+  }
+  function clearVoices(){ voices.forEach(v=>{ try{ v.stop&&v.stop(); v.disconnect&&v.disconnect(); }catch(e){} }); voices=[]; }
+
+  /* ---- Looped-WAV fallback (Lockdown) ---- */
+  function renderDroneWav(){
+    // choose loop length = N periods of Sa, N divisible by 6, so Sa, octave,
+    // Pa (3/2), Ma (4/3) and lower Sa all complete whole cycles → seamless loop.
+    const fSa=freqFor(1);
+    let N=Math.round(3.2*fSa/6)*6; if(N<6) N=6;
+    const total=Math.round(N/fSa*SR), out=new Float32Array(total);
+    const list=activeList(); let peak=0;
+    list.forEach(([k,r])=>{
+      const f=freqFor(r), a=GAINS[k];
+      for(let i=0;i<total;i++){
+        const t=i/SR; let s=0;
+        for(let h=0;h<HARM.length;h++) s+=HARM[h]*Math.sin(2*Math.PI*f*(h+1)*t);
+        out[i]+=a*s;
+      }
+    });
+    for(let i=0;i<total;i++) peak=Math.max(peak,Math.abs(out[i]));
+    const norm=peak>0?0.82/peak:1;
+    const buf=new ArrayBuffer(44+total*2), dv=new DataView(buf); let p=0;
+    const str=s=>{ for(let i=0;i<s.length;i++) dv.setUint8(p++,s.charCodeAt(i)); };
+    const u32=v=>{ dv.setUint32(p,v,true); p+=4; }, u16=v=>{ dv.setUint16(p,v,true); p+=2; };
+    str("RIFF"); u32(36+total*2); str("WAVE"); str("fmt "); u32(16); u16(1); u16(1);
+    u32(SR); u32(SR*2); u16(2); u16(16); str("data"); u32(total*2);
+    for(let i=0;i<total;i++){ dv.setInt16(44+i*2, Math.max(-1,Math.min(1,out[i]*norm))*32767, true); }
+    if(loopUrl) URL.revokeObjectURL(loopUrl);
+    loopUrl=URL.createObjectURL(new Blob([buf],{type:"audio/wav"}));
+    return loopUrl;
+  }
+  function startLoop(){
+    if(!loopEl){ loopEl=new Audio(); loopEl.loop=true; loopEl.setAttribute("playsinline","");
+      loopEl.style.display="none"; document.body.appendChild(loopEl); }
+    loopEl.loop=true; loopEl.src=renderDroneWav(); loopEl.volume=vol;
+    try{ const pr=loopEl.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){}
+  }
+
+  /* ---- public ---- */
+  function start(){
+    playing=true;
+    if(ensure() && ctx){
+      const go=()=>{ if(ctx.state==="running"){ buildVoices();
+          master.gain.cancelScheduledValues(ctx.currentTime);
+          master.gain.setTargetAtTime(vol, ctx.currentTime, 0.08); }
+        else startLoop(); };
+      if(ctx.state!=="running" && ctx.resume) ctx.resume().then(go).catch(go); else go();
+    } else { startLoop(); }
+  }
+  function stop(){
+    playing=false;
+    if(master && ctx){ master.gain.cancelScheduledValues(ctx.currentTime);
+      master.gain.setTargetAtTime(0, ctx.currentTime, 0.06);
+      setTimeout(clearVoices, 250); }
+    if(loopEl){ try{ loopEl.pause(); }catch(e){} }
+  }
+  function refresh(){ // re-apply current settings while playing
+    if(!playing) return;
+    if(ctx && master && ctx.state==="running" && voices.length) buildVoices();
+    else if(loopEl) startLoop();
+  }
+  function set(opts){
+    if(opts.saHz!=null) saHz=opts.saHz;
+    if(opts.cents!=null) cents=opts.cents;
+    if(opts.vol!=null){ vol=opts.vol; if(master&&ctx) master.gain.setTargetAtTime(playing?vol:0, ctx.currentTime, 0.05); if(loopEl) loopEl.volume=vol; }
+    if(opts.ratios) ratios=Object.assign(ratios, opts.ratios);
+    if(opts.saHz!=null||opts.cents!=null||opts.ratios) refresh();
+  }
+  return { start, stop, set, isPlaying:()=>playing };
+})();
+
+/* ---- Shruti UI ---- */
+const NOTE_NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+(function populatePitches(){
+  const sel=$("#sa-pitch");
+  for(let midi=45; midi<=69; midi++){            // A2 .. A4
+    const hz=440*Math.pow(2,(midi-69)/12);
+    const name=NOTE_NAMES[midi%12]+(Math.floor(midi/12)-1);
+    const o=document.createElement("option");
+    o.value=hz.toFixed(3); o.textContent=name+" ("+hz.toFixed(1)+" Hz)";
+    if(midi===50) o.selected=true;               // default D3
+    sel.appendChild(o);
+  }
+})();
+function droneRatios(){ return { pa:$("#d-pa").checked, ma:$("#d-ma").checked,
+  upper:$("#d-upper").checked, lower:$("#d-lower").checked, ni:$("#d-ni").checked }; }
+function applyDroneSettings(){
+  Drone.set({ saHz:parseFloat($("#sa-pitch").value), cents:parseInt($("#sa-fine").value,10),
+    vol:parseInt($("#drone-vol").value,10)/100, ratios:droneRatios() });
+}
+function toggleDrone(){
+  const btn=$("#drone-play"), pill=$("#drone-state");
+  if(Drone.isPlaying()){ Drone.stop(); btn.textContent="▶ Start drone"; pill.textContent="stopped"; pill.className="pill"; }
+  else { applyDroneSettings(); Drone.start(); btn.textContent="⏹ Stop drone"; pill.textContent="playing"; pill.className="pill sam"; }
+}
+$("#drone-play").addEventListener("click", toggleDrone);
+$("#sa-pitch").addEventListener("change", applyDroneSettings);
+$("#sa-fine").addEventListener("input", ()=>{ $("#sa-fine-val").textContent=$("#sa-fine").value; applyDroneSettings(); });
+$("#drone-vol").addEventListener("input", applyDroneSettings);
+["d-pa","d-ma","d-upper","d-lower","d-ni"].forEach(id=>$("#"+id).addEventListener("change", applyDroneSettings));
 
 // init
 populateTalas();
