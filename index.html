@@ -228,6 +228,13 @@
       <label class="toggle"><input type="checkbox" id="t-bols" checked> Speak bols / counts visually</label>
       <label class="toggle" title="Forces a plain-audio engine that works when the Web Audio API is blocked, e.g. iOS Lockdown Mode."><input type="checkbox" id="t-compat"> Compatibility sound (iOS Lockdown)</label>
     </div>
+    <p class="note" id="lockdown-note" style="font-size:.82rem">
+      <strong>No sound on iPhone?</strong> iOS <em>Lockdown Mode</em> blocks all web audio. The beat will
+      still cycle visually. To get sound, open this page in Safari, tap the <strong>“ɑA”</strong> button in
+      the address bar → <strong>Website Settings</strong> (or the page menu) → turn <strong>off</strong>
+      Lockdown Mode for this site, then reload. The status line at the bottom shows whether audio is playing
+      or blocked.
+    </p>
 
     <div class="trainer-row">
       <div class="ctl">
@@ -353,7 +360,7 @@
        Tip: press <code>Space</code> to start/stop, <code>↑/↓</code> to change tempo.</p>
     <p><a href="https://github.com/revurpk/metronome" id="gh-link">Source on GitHub</a> · Free &amp; open. Practice well. 🙏</p>
     <p>© 2026 Pradyumna Revur · Released under the <a href="https://github.com/revurpk/metronome/blob/main/LICENSE">MIT License</a></p>
-    <p style="opacity:.6;font-size:.78rem">build 2026-06-14g · <span id="audio-status">audio: initialising…</span></p>
+    <p style="opacity:.6;font-size:.78rem">build 2026-06-14h · <span id="audio-status">audio: initialising…</span></p>
   </footer>
 </div>
 
@@ -561,38 +568,60 @@ const Engine = (()=> {
     loopUrl=pcmToWavUrl(out);
     return loopUrl;
   }
+  let htmlStartWall=0, htmlAudioOk=null, audioCheckTimer=null;
+  function tryPlayLoop(){
+    loopEl.loop=true; loopEl.src=renderCycle(); loopEl.volume=volume;
+    try{ const pr=loopEl.play(); if(pr&&pr.catch) pr.catch(()=>{ htmlAudioOk=false; }); }catch(e){ htmlAudioOk=false; }
+  }
   function startHtml(){            // compatibility backend entry point
     backend="html"; onFallback();
-    if(!loopEl){ loopEl=new Audio(); }
-    loopEl.loop=true; loopEl.src=renderCycle(); loopEl.volume=volume;
-    lastIdx=-1; cycleCount=0;
-    try{ const pr=loopEl.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){}
+    if(!loopEl){
+      loopEl=new Audio(); loopEl.setAttribute("playsinline","");
+      // Some iOS versions only play <audio> that is attached to the document.
+      loopEl.style.display="none"; document.body.appendChild(loopEl);
+    }
+    htmlAudioOk=null;
+    tryPlayLoop();
+    // The VISUAL runs on an independent wall clock, so the cycle animates even if
+    // the OS blocks audio playback (e.g. iOS Lockdown Mode).
+    htmlStartWall=performance.now(); lastIdx=-1; cycleCount=0;
     loopVisual();
+    // After a moment, see whether audio actually advanced and report it.
+    if(audioCheckTimer) clearTimeout(audioCheckTimer);
+    audioCheckTimer=setTimeout(()=>{
+      htmlAudioOk = !!(loopEl && loopEl.currentTime>0.02 && !loopEl.paused);
+    }, 600);
   }
   function reloadLoop(){           // re-render after a tempo/setting change (same element)
     if(!loopEl) return;
-    loopEl.src=renderCycle(); loopEl.loop=true; loopEl.volume=volume;
-    try{ const pr=loopEl.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){}
+    tryPlayLoop();
+    htmlStartWall=performance.now(); lastIdx=-1;   // keep visual clock aligned to audio restart
   }
   function loopVisual(){
     if(!running){ return; }
-    let idx=0;
-    if(loopEl && cycleLen>0){
-      const into=loopEl.currentTime % cycleLen;
-      idx=Math.min(beats.length-1, Math.floor(into/beatDur));
-    }
+    const elapsed=(performance.now()-htmlStartWall)/1000;
+    const cyc=cycleLen>0 ? Math.floor(elapsed/cycleLen) : 0;
+    const into=cycleLen>0 ? (elapsed - cyc*cycleLen) : 0;
+    let idx=Math.min(beats.length-1, Math.floor(into/beatDur));
     if(idx!==lastIdx){
       onBeat(idx, false, 0);
-      if(idx===0 && lastIdx>0){           // wrapped to a new cycle
+      if(idx===0 && lastIdx>0){            // wrapped to a new cycle
         cycleCount++; onCycle(cycleCount);
         if(trainerStep>0 && cycleCount%trainerEvery===0){ setBpm(Math.min(300,bpm+trainerStep)); }
       }
       lastIdx=idx;
     }
-    visualTimer=setTimeout(loopVisual, 30);
+    visualTimer=setTimeout(loopVisual, 25);
+  }
+  function audioState(){
+    if(backend==="webaudio") return "webaudio";
+    if(htmlAudioOk===false) return "blocked";
+    if(htmlAudioOk===true) return "playing";
+    return "starting";
   }
   function stopHtml(){
     if(visualTimer){ clearTimeout(visualTimer); visualTimer=null; }
+    if(audioCheckTimer){ clearTimeout(audioCheckTimer); audioCheckTimer=null; }
     if(loopEl){ try{ loopEl.pause(); }catch(e){} }
   }
 
@@ -733,7 +762,7 @@ const Engine = (()=> {
     if(backend==="html" && running) reloadLoop();   // re-render with new settings
   }
   return { start, stop, setBpm, setVolume, setLive, isRunning:()=>running,
-           getBackend:()=>backend, ensure, prime:buildClicks };
+           getBackend:()=>backend, audioState, ensure, prime:buildClicks };
 })();
 
 /* ============================================================
@@ -869,7 +898,9 @@ function startStop(){
     trainerEvery: Math.max(1,parseInt(el.trainerEvery.value,10)||4),
     onBeat: (idx,counting,cPos)=>{
       const st=$("#audio-status");
-      if(st) st.textContent = "audio: "+(Engine.getBackend()==="html"?"compatibility (plain)":"Web Audio");
+      if(st){ const s=Engine.audioState();
+        st.textContent = "audio: " + ({webaudio:"Web Audio", playing:"compatibility (playing)",
+          starting:"compatibility (starting…)", blocked:"compatibility (BLOCKED by OS — see note)"}[s]||s); }
       if(counting){
         el.gMeta.textContent="Count-in… "+(cPos+1);
         el.gBol.textContent="•";

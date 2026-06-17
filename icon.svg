@@ -88,21 +88,25 @@
     <ellipse cx="402" cy="268" rx="30" ry="13" fill="url(#syahi)"/>
   </g>
 
-  <!-- ===== MRIDANGAM (lower-left, horizontal) ===== -->
-  <g transform="translate(-78,86) scale(0.7)">
-    <ellipse cx="248" cy="452" rx="200" ry="26" fill="#000" opacity="0.24"/>
-    <path d="M118 316 C 210 300, 300 304, 360 318 L 360 426 C 300 440, 210 444, 118 428 Z" fill="url(#woodM)"/>
-    <ellipse cx="118" cy="372" rx="20" ry="58" fill="#5d3618"/>
-    <ellipse cx="122" cy="372" rx="13" ry="50" fill="#caa86f"/>
-    <g stroke="#6e3f18" stroke-width="7" opacity="0.5" fill="none">
-      <path d="M168 308 L150 436"/><path d="M226 305 L214 440"/>
-      <path d="M286 306 L280 440"/><path d="M332 312 L330 436"/>
+  <!-- ===== MRIDANGAM (lower-left, horizontal barrel) ===== -->
+  <g transform="translate(-16,264) scale(0.72)">
+    <ellipse cx="234" cy="224" rx="200" ry="20" fill="#000" opacity="0.22"/>
+    <!-- left thoppi head (bass) -->
+    <ellipse cx="60" cy="130" rx="24" ry="66" fill="#5d3618"/>
+    <ellipse cx="64" cy="130" rx="15" ry="56" fill="#d8b988"/>
+    <!-- tapered barrel body -->
+    <path d="M60 64 C 170 50, 290 50, 392 60 L 392 200 C 290 210, 170 210, 60 196 Z" fill="url(#woodM)"/>
+    <!-- leather lacing straps -->
+    <g stroke="#6e3f18" stroke-width="8" opacity="0.45" fill="none">
+      <path d="M120 56 L112 204"/><path d="M190 52 L186 208"/>
+      <path d="M262 52 L266 208"/><path d="M330 56 L338 204"/>
     </g>
-    <ellipse cx="372" cy="372" rx="60" ry="72" fill="#5d3618"/>
-    <ellipse cx="372" cy="372" rx="52" ry="64" fill="url(#skinM)"/>
-    <ellipse cx="372" cy="372" rx="44" ry="55" fill="none" stroke="#1a1a20" stroke-width="9" opacity="0.85"/>
-    <ellipse cx="372" cy="372" rx="26" ry="32" fill="url(#syahi)"/>
-    <ellipse cx="362" cy="360" rx="9" ry="9" fill="#6b6b73" opacity="0.55"/>
+    <!-- right valanthalai head (treble) facing the viewer, with syahi -->
+    <ellipse cx="392" cy="130" rx="42" ry="72" fill="#5d3618"/>
+    <ellipse cx="392" cy="130" rx="34" ry="63" fill="url(#skinM)"/>
+    <ellipse cx="392" cy="130" rx="27" ry="52" fill="none" stroke="#1a1a20" stroke-width="9" opacity="0.85"/>
+    <ellipse cx="392" cy="130" rx="16" ry="30" fill="url(#syahi)"/>
+    <ellipse cx="384" cy="118" rx="6" ry="7" fill="#6b6b73" opacity="0.5"/>
   </g>
 
   <!-- ===== GHATAM (lower-right, clay pot) ===== -->
